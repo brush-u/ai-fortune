@@ -407,10 +407,15 @@ p.desc{ font-size:0.82rem; color:var(--text-soft); text-align:center; margin-bot
 
   retryBtn.addEventListener('click', () => { errorBox.style.display='none'; goToStart(); });
   scanCloseBtn.addEventListener('click', () => { points = {}; moles = []; mode = 'idle'; moleList.innerHTML=''; goToStart(); });
-  retryLink.addEventListener('click', () => { points = {}; moles = []; mode = 'idle'; moleList.innerHTML=''; goToStart(); });
+  retryLink.addEventListener('click', () => {
+    if(!img || !img.src) return;
+    points = {}; moles = []; mode = 'idle'; moleList.innerHTML = '';
+    resultEl.style.display = 'none';
+    startScan(true);
+  });
 
   // ---------- scan pipeline ----------
-  async function startScan(){
+  async function startScan(scrollToView){
     document.getElementById('uploadBlock').style.display = 'none';
     errorBox.style.display = 'none';
     resultEl.style.display = 'none';
@@ -427,6 +432,7 @@ p.desc{ font-size:0.82rem; color:var(--text-soft); text-align:center; margin-bot
 
     scanWrap.style.display = 'block';
     scanStatus.style.display = 'flex';
+    if(scrollToView) scanWrap.scrollIntoView({ behavior:'smooth', block:'start' });
     scanLabel.textContent = '모델을 불러오는 중';
     scanSub.textContent = '처음 실행 시 몇 초 정도 걸릴 수 있어요';
     laser.classList.add('active');
