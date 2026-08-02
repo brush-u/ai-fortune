@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>AI 손금(수상)</title>
+  <title>실시간 AI 손금</title>
   
   <meta name="theme-color" content="#f1f5f9">
   <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
@@ -307,12 +307,12 @@
 
   <nav class="app-nav">
     <a href="#" class="nav-brand">🔮 AI 운세 센터</a>
-    <button class="nav-home-btn" onclick="goHome()">🏠 홈</button>
+    <button class="nav-home-btn" onclick="goHome()">🏠 AI 운세 센터 홈</button>
   </nav>
 
   <div class="container">
     <div class="app-header">
-      <h1>✋ 실시간 AI 손금</h1>
+      <h1>실시간 AI 손금</h1>
     </div>
 
     <div class="guide-box">
@@ -460,21 +460,21 @@
     }
 
     async function initHandsAI() {
-      handsInstance = new Hands({
-        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
-      });
+      try {
+        if (!handsInstance) {
+          handsInstance = new Hands({
+            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+          });
+          handsInstance.setOptions({
+            maxNumHands: 1,
+            modelComplexity: 1,
+            minDetectionConfidence: 0.6,
+            minTrackingConfidence: 0.6
+          });
+          handsInstance.onResults(onResults);
+        }
 
-      handsInstance.setOptions({
-        maxNumHands: 1,
-        modelComplexity: 1,
-        minDetectionConfidence: 0.6,
-        minTrackingConfidence: 0.6
-      });
-
-      handsInstance.onResults(onResults);
-
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        try {
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
           const constraints = {
             video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: useFrontCamera ? "user" : "environment" },
             audio: false
@@ -482,6 +482,10 @@
           mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
           video.srcObject = mediaStream;
           await video.play();
+
+          if (cameraInstance) {
+            cameraInstance.stop();
+          }
 
           cameraInstance = new Camera(video, {
             onFrame: async () => {
@@ -493,9 +497,10 @@
             height: 720
           });
           cameraInstance.start();
-        } catch (err) {
-          statusMsg.innerText = "⚠️ 카메라 권한을 확인해 주세요.";
         }
+      } catch (err) {
+        statusMsg.className = "status-msg";
+        statusMsg.innerText = "⚠️ 카메라 권한을 허용해 주시거나 브라우저 설정을 확인해 주세요.";
       }
     }
 
@@ -503,6 +508,9 @@
       useFrontCamera = !useFrontCamera;
       if (mediaStream) {
         mediaStream.getTracks().forEach(track => track.stop());
+      }
+      if (cameraInstance) {
+        cameraInstance.stop();
       }
       initHandsAI();
     }
@@ -549,7 +557,6 @@
         ctx.lineWidth = 3.5;
         ctx.lineCap = 'round';
 
-        // 캡처 후에도 관절 포인트(빨간 점) 유지
         latestLandmarks.forEach(pt => {
           ctx.fillStyle = '#ef4444';
           ctx.beginPath();
@@ -557,7 +564,7 @@
           ctx.fill();
         });
 
-        // 1. 생명선 (주황색) - 손바닥 내부 안착 좌표
+        // 1. 생명선 (주황색)
         ctx.strokeStyle = '#f59e0b';
         ctx.beginPath(); 
         ctx.moveTo(thumbBase.x * w, thumbBase.y * h); 
