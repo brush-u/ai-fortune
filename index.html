@@ -44,6 +44,14 @@
             border-color: #cbd5e1;
         }
 
+        /* 비활성화(준비중) 메뉴 스타일 */
+        .menu-card.disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            pointer-events: none;
+            background: var(--bg-secondary);
+        }
+
         .menu-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 6px; }
         .menu-card p { font-size: 0.82rem; color: var(--text-sub); line-height: 1.4; margin-bottom: 20px; }
 
@@ -66,6 +74,7 @@
         .badge-emerald { background: #d1fae5; color: #047857; }
         .badge-amber { background: #fef3c7; color: #b45309; }
         .badge-purple { background: #f3e8ff; color: #6b21a8; }
+        .badge-gray { background: #f3f4f6; color: #6b7280; }
     </style>
 </head>
 <body>
@@ -83,25 +92,70 @@
         <div class="menu-grid" id="menuGrid"></div>
     </div>
 
-    <script src="menu-data.js"></script>
     <script>
+        // 내부 데이터 직접 정의 (관상 분석 아이콘을 정상적인 이모지 '👤'로 수정)
+        const fortuneMenus = [
+            {
+                title: "AI 손금(수상) 분석",
+                desc: "인공지능 비전 기술로 손금 라인을 정밀하게 분석합니다.",
+                url: "palm.html",
+                icon: "✋",
+                badge: "AI Vision",
+                theme: "emerald"
+            },
+            {
+                title: "AI 관상 분석",
+                desc: "얼굴 랜드마크를 분석하여 성향과 운세를 풀어드립니다.",
+                url: "face.html",
+                icon: "👤",
+                badge: "AI Vision",
+                theme: "indigo"
+            },
+            {
+                title: "정통사주명리",
+                desc: "태어난 사주 원국을 바탕으로 깊이 있는 운세를 확인합니다.",
+                url: "saju.html",
+                icon: "📜",
+                badge: "정통 명리",
+                theme: "amber"
+            },
+            {
+                title: "신토정비결",
+                desc: "한 해의 흐름과 시기별 조언을 명쾌하게 풀어드립니다.",
+                url: "tojeong.html",
+                icon: "📖",
+                badge: "신년 운세",
+                theme: "purple"
+            }
+        ];
+
         const grid = document.getElementById('menuGrid');
+        
+        // 정통사주명리 및 신토정비결 서비스 준비중 처리 키워드
+        const preparingKeywords = ["정통사주명리", "신토정", "사주명리"];
+
         fortuneMenus.forEach(menu => {
-            const card = document.createElement('a');
-            card.href = menu.url;
-            card.className = 'menu-card';
+            const isPreparing = preparingKeywords.some(keyword => menu.title.includes(keyword));
+            const card = document.createElement(isPreparing ? 'div' : 'a');
+            
+            if (!isPreparing) {
+                card.href = menu.url;
+            }
+            
+            card.className = `menu-card ${isPreparing ? 'disabled' : ''}`;
+            
             card.innerHTML = `
                 <div>
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
-                        <span style="font-size: 1.6rem;">${menu.icon || '✨'}</span>
-                        <span class="badge badge-${menu.theme}">${menu.badge}</span>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+                        <span style="font-size: 1.8rem;">${menu.icon || '✨'}</span>
+                        <span class="badge ${isPreparing ? 'badge-gray' : 'badge-' + menu.theme}">${isPreparing ? '준비중' : menu.badge}</span>
                     </div>
                     <h3>${menu.title}</h3>
                     <p>${menu.desc}</p>
                 </div>
                 <div class="card-footer">
-                    <span>시작하기</span>
-                    <span>&rarr;</span>
+                    <span>${isPreparing ? '서비스 준비중' : '시작하기'}</span>
+                    <span>${isPreparing ? '⏳' : '&rarr;'}</span>
                 </div>
             `;
             grid.appendChild(card);
