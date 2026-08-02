@@ -125,8 +125,8 @@
       object-fit: cover;
     }
 
-    video { z-index: 1; display: block; transform: scaleX(-1); }
-    #snapshot-img { z-index: 2; display: none; transform: scaleX(-1); }
+    video { z-index: 1; display: block; }
+    #snapshot-img { z-index: 2; display: none; }
     canvas { pointer-events: none; z-index: 3; }
 
     .palm-guide-frame {
@@ -316,9 +316,9 @@
     </div>
 
     <div class="guide-box">
-      <div class="guide-title">✨ 4대 손금 완벽 분석 (점 유지 및 좌표 보정)</div>
+      <div class="guide-title">✨ 카메라 전환 및 4대 손금 분석</div>
       <ul>
-        <li><strong>스캔 후 점/선 유지:</strong> 캡처 후에도 손바닥 안쪽으로 선과 관절 포인트가 깔끔하게 고정됩니다.</li>
+        <li><strong>카메라 전환:</strong> 상단의 '🔄 카메라 전환' 버튼을 누르면 전면/후면 카메라가 즉시 토글됩니다.</li>
       </ul>
     </div>
 
@@ -390,7 +390,7 @@
     const btnAction = document.getElementById("btn-action");
 
     let mediaStream = null;
-    let useFrontCamera = true;
+    let useFrontCamera = true; // true: 전면(user), false: 후면(environment)
     let isHandDetected = false;
     let isScanningDone = false;
     let handsInstance = null;
@@ -474,18 +474,37 @@
           handsInstance.onResults(onResults);
         }
 
+        // 기존 스트림 및 카메라 인스턴스 정리
+        if (mediaStream) {
+          mediaStream.getTracks().forEach(track => track.stop());
+        }
+        if (cameraInstance) {
+          cameraInstance.stop();
+        }
+
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
           const constraints = {
-            video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: useFrontCamera ? "user" : "environment" },
+            video: {
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+              facingMode: useFrontCamera ? "user" : "environment"
+            },
             audio: false
           };
+
           mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
           video.srcObject = mediaStream;
-          await video.play();
-
-          if (cameraInstance) {
-            cameraInstance.stop();
+          
+          // 전면 카메라인 경우에만 좌우반전 적용 (셀카 모드)
+          if (useFrontCamera) {
+            video.style.transform = "scaleX(-1)";
+            snapshotImg.style.transform = "scaleX(-1)";
+          } else {
+            video.style.transform = "scaleX(1)";
+            snapshotImg.style.transform = "scaleX(1)";
           }
+
+          await video.play();
 
           cameraInstance = new Camera(video, {
             onFrame: async () => {
@@ -506,12 +525,6 @@
 
     function switchCamera() {
       useFrontCamera = !useFrontCamera;
-      if (mediaStream) {
-        mediaStream.getTracks().forEach(track => track.stop());
-      }
-      if (cameraInstance) {
-        cameraInstance.stop();
-      }
       initHandsAI();
     }
 
