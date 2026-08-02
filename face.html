@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>AI 정밀 관상</title>
+  
+  <meta name="theme-color" content="#f1f5f9">
+  <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
+
+  <!-- face-api.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
+  <!-- 화면 캡처 라이브러리 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    
+    html, body {
+      width: 100%;
+      min-height: 100dvh;
+      background-color: #f1f5f9;
+      color: #1e293b;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      overflow-x: hidden;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: env(safe-area-inset-top, 10px) env(safe-area-inset-right, 10px) env(safe-area-inset-bottom, 10px) env(safe-area-inset-left, 10px);
+    }
+
+    .container {
+      background: #ffffff;
+      padding: 16px;
+      border-radius: 20px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+      margin: auto 0;
+    }
+
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .app-header svg { width: 28px; height: 28px; }
+
+    h1 { font-size: 1.35rem; color: #4338ca; display: inline-block; }
+    p.desc { font-size: 0.78rem; color: #64748b; margin-bottom: 10px; }
+
+    .mode-selector {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 10px;
+      background: #f8fafc;
+      padding: 4px;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+    }
+    .mode-btn {
+      flex: 1;
+      padding: 9px 2px;
+      font-size: 0.75rem;
+      background: transparent;
+      color: #64748b;
+      border-radius: 6px;
+      cursor: pointer;
+      border: none;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    .mode-btn.active {
+      background: #6366f1;
+      color: #ffffff;
+      font-weight: bold;
+    }
+
+    .guide-box {
+      background: #f8fafc;
+      border: 1px dashed #cbd5e1;
+      border-radius: 10px;
+      padding: 8px 12px;
+      margin-bottom: 10px;
+      text-align: left;
+      font-size: 0.72rem;
+      line-height: 1.35;
+      color: #334155;
+    }
+    .guide-box .guide-title { color: #d97706; font-weight: bold; margin-bottom: 2px; }
+    .good { color: #16a34a; font-weight: bold; }
+    .bad { color: #dc2626; font-weight: bold; }
+    
+    .status-msg {
+      background: #f1f5f9;
+      color: #334155;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      margin-bottom: 10px;
+      font-weight: bold;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1.3;
+      border: 1px solid #e2e8f0;
+    }
+
+    .video-wrapper {
+      position: relative;
+      width: 100%;
+      background: #000;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 10px;
+      border: 2px solid #e2e8f0;
+      aspect-ratio: 4 / 3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    video, img.uploaded-img, canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    video { z-index: 1; display: block; }
+    img.uploaded-img { z-index: 2; display: none; }
+    canvas { pointer-events: none; z-index: 3; }
+
+    .scan-overlay {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 10;
+      display: none;
+    }
+    .scan-overlay.active { display: block; }
+    .scan-line {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 4px;
+      background: linear-gradient(90deg, transparent, #ef4444, #f59e0b, #ef4444, transparent);
+      box-shadow: 0 0 15px #ef4444, 0 0 25px #f59e0b;
+      animation: scan-move 2s linear infinite;
+    }
+    @keyframes scan-move {
+      0% { top: 0%; }
+      50% { top: 92%; }
+      100% { top: 0%; }
+    }
+
+    .main-btn {
+      background: linear-gradient(135deg, #6366f1, #a855f7);
+      color: white;
+      border: none;
+      padding: 13px;
+      font-size: 0.95rem;
+      font-weight: bold;
+      border-radius: 10px;
+      cursor: pointer;
+      width: 100%;
+      box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.25);
+    }
+
+    .adjust-tip {
+      background: #fef2f2;
+      border: 1px solid #fca5a5;
+      color: #991b1b;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      margin-bottom: 10px;
+      text-align: left;
+      display: none;
+      line-height: 1.35;
+    }
+
+    .result-card {
+      margin-top: 12px;
+      background: #f8fafc;
+      padding: 16px;
+      border-radius: 14px;
+      text-align: left;
+      display: none;
+      border: 1px solid #e2e8f0;
+      font-size: 0.9rem;
+    }
+    .result-card h3 { color: #4338ca; margin-bottom: 12px; font-size: 1.2rem; text-align: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; }
+
+    .profile-bar {
+      display: flex;
+      justify-content: space-around;
+      background: #ffffff;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      border: 1px solid #e2e8f0;
+    }
+    .profile-item { text-align: center; }
+    .profile-item .label { font-size: 0.75rem; color: #7c3aed; display: block; }
+    .profile-item .val { font-size: 1.1rem; font-weight: bold; color: #1e293b; margin-top: 3px; }
+
+    .fortune-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .fortune-box {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      padding: 8px 4px;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .fortune-box .f-title { font-size: 0.72rem; color: #64748b; margin-bottom: 3px; }
+    .fortune-box .f-score { font-size: 0.95rem; font-weight: bold; color: #d97706; }
+
+    .celeb-box {
+      background: linear-gradient(135deg, #eef2ff, #f3e8ff);
+      border: 1px solid #c7d2fe;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+    .celeb-box h4 { color: #0284c7; font-size: 0.85rem; margin-bottom: 5px; }
+    .celeb-box .celeb-name { font-size: 1.3rem; font-weight: bold; color: #b45309; margin-bottom: 6px; }
+    .celeb-reason { font-size: 0.8rem; color: #334155; background: rgba(255, 255, 255, 0.7); padding: 6px 10px; border-radius: 6px; line-height: 1.4; border: 1px solid #e2e8f0; }
+
+    .ratios {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      background: #ffffff;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      border: 1px solid #e2e8f0;
+      color: #475569;
+    }
+    .ratios div { text-align: center; flex: 1; }
+    .ratios span { display: block; font-weight: bold; font-size: 1.1rem; color: #0284c7; margin-top: 4px; }
+
+    .detail-section {
+      background: #ffffff;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      border: 1px solid #e2e8f0;
+      border-left: 4px solid #6366f1;
+    }
+    .detail-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .detail-section h4 { color: #b45309; font-size: 0.95rem; }
+
+    .shape-desc {
+      background: #f8fafc;
+      padding: 8px;
+      border-radius: 6px;
+      font-size: 0.83rem;
+      color: #0284c7;
+      margin-bottom: 8px;
+      border: 1px solid #e2e8f0;
+      font-weight: 500;
+    }
+
+    .original-data {
+      font-size: 0.8rem;
+      color: #334155;
+      line-height: 1.5;
+      margin-bottom: 10px;
+      background: #f8fafc;
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .analysis-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .good-box {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 0.83rem;
+      line-height: 1.5;
+      color: #166534;
+    }
+    .good-box strong { color: #15803d; display: block; margin-bottom: 5px; font-size: 0.9rem;}
+
+    .bad-box {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 0.83rem;
+      line-height: 1.5;
+      color: #991b1b;
+    }
+    .bad-box strong { color: #dc2626; display: block; margin-bottom: 5px; font-size: 0.9rem;}
+
+    .share-action-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px dashed #cbd5e1;
+    }
+    .share-btn {
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      transition: all 0.2s;
+    }
+    .btn-save { background: #e2e8f0; color: #334155; border: 1px solid #cbd5e1; }
+    .btn-share { background: #f59e0b; color: #ffffff; }
+  </style>
+</head>
+<body>
+    <nav class="app-nav">
+        <a href="index.html" class="nav-brand">🔮 AI 운세 센터</a>
+        <a href="index.html" class="nav-home-btn">🏠 홈으로</a>
+    </nav>
+
+<div class="container" id="capture-container">
+  <div class="app-header">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="42" fill="#e0e7ff" stroke="#4338ca" stroke-width="3" stroke-dasharray="6 3"/>
+      <path d="M 20 50 Q 50 20 80 50 Q 50 80 20 50 Z" fill="#ffffff" stroke="#0284c7" stroke-width="4"/>
+      <circle cx="50" cy="50" r="12" fill="#4338ca"/>
+      <circle cx="50" cy="50" r="6" fill="#ffffff"/>
+      <circle cx="52" cy="48" r="2" fill="#4338ca"/>
+    </svg>
+    <h1>AI 정밀 관상</h1>
+  </div>
+  <p class="desc" id="mode-desc">원하시는 모드를 선택해 주세요</p>
+
+  <div class="mode-selector">
+    <button class="mode-btn active" id="tab-front" onclick="switchMode('front')">👤 정면 스캔</button>
+    <button class="mode-btn" id="tab-ear" onclick="switchMode('ear')">👂 측면/귀 스캔</button>
+    <button class="mode-btn" id="tab-upload" onclick="switchMode('upload')">📁 사진 업로드</button>
+  </div>
+
+  <div class="guide-box">
+    <div class="guide-title" id="guide-head">📌 정면 관상 촬영 가이드</div>
+    <ul id="guide-list">
+      <li><span class="good">[권장]</span> 정면 시선, 조명이 밝고 이마/눈/코/입이 명확한 사진</li>
+      <li><span class="bad">[주의]</span> 안경/모자/마스크 착용, 강한 보정 필터, 어두운 사진</li>
+    </ul>
+  </div>
+
+  <div id="status" class="status-msg">⏳ AI 모델 로딩 준비 중...</div>
+
+  <div id="adjust-tip" class="adjust-tip">
+    💡 <b>위치 재조정이 필요합니다:</b><br>
+    <span id="adjust-tip-text">얼굴 또는 귀의 인식이 불분명합니다. 카메라 각도와 거리를 조절해 주세요.</span>
+  </div>
+
+  <div class="video-wrapper" id="video-wrapper-box">
+    <video id="webcam" autoplay playsinline muted></video>
+    <img id="uploaded-preview" class="uploaded-img" alt="업로드 이미지">
+    <canvas id="output_canvas"></canvas>
+
+    <div id="scan-overlay" class="scan-overlay">
+      <div class="scan-line"></div>
+    </div>
+  </div>
+
+  <input type="file" id="file-input" accept="image/*" style="display: none;">
+
+  <div id="action-area">
+    <button id="btn-action" class="main-btn" onclick="handleActionClick()">📸 정면 관상 정밀 스캔하기</button>
+  </div>
+
+  <div id="result" class="result-card">
+    <h3 id="result-main-title">📊 정밀 관상 분석 리포트</h3>
+
+    <div class="profile-bar">
+      <div class="profile-item"><span class="label">성별</span><span class="val" id="res-gender">-</span></div>
+      <div class="profile-item"><span class="label">추정 연령</span><span class="val" id="res-age">-</span></div>
+      <div class="profile-item"><span class="label">오행/격국</span><span class="val" id="res-element" style="color:#d97706;">-</span></div>
+    </div>
+
+    <div class="fortune-grid" id="fortune-grid-box">
+      <div class="fortune-box">
+        <div class="f-title">💖 연애/애정운</div>
+        <div class="f-score" id="score-love">-</div>
+      </div>
+      <div class="fortune-box">
+        <div class="f-title">💰 재물/금전운</div>
+        <div class="f-score" id="score-wealth">-</div>
+      </div>
+      <div class="fortune-box">
+        <div class="f-title">💼 직장/사업운</div>
+        <div class="f-score" id="score-career">-</div>
+      </div>
+    </div>
+
+    <div class="celeb-box" id="celeb-container">
+      <h4>✨ AI 관상 매칭 연예인 & 분석 포인트</h4>
+      <div class="celeb-name" id="res-celeb">-</div>
+      <div class="celeb-reason" id="res-celeb-reason">매칭 분석 중...</div>
+    </div>
+
+    <div class="ratios" id="ratio-container">
+      <div>상정 (초년/지혜)<span id="r-top">-</span></div>
+      <div>중정 (중년/재물)<span id="r-mid">-</span></div>
+      <div>하정 (말년/인복)<span id="r-bot">-</span></div>
+    </div>
+
+    <div id="details-container"></div>
+
+    <div class="detail-section" style="border-left-color: #a855f7; margin-top: 8px;">
+      <div class="detail-header">
+        <h4>💡 관상 총평 및 현실적 개운(開運) 조언</h4>
+      </div>
+      <p id="desc-summary" style="font-size:0.85rem; line-height:1.5; color:#334155;">-</p>
+    </div>
+
+    <div class="share-action-grid">
+      <button class="share-btn btn-save" onclick="saveResultImage()">
+        💾 사진 앱에 저장
+      </button>
+      <button class="share-btn btn-share" onclick="shareResult()">
+        💛 결과 공유하기
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const video = document.getElementById("webcam");
+  const imgPreview = document.getElementById("uploaded-preview");
+  const canvas = document.getElementById("output_canvas");
+  const ctx = canvas.getContext("2d");
+  const btnAction = document.getElementById("btn-action");
+  const statusMsg = document.getElementById("status");
+  const adjustTip = document.getElementById("adjust-tip");
+  const adjustTipText = document.getElementById("adjust-tip-text");
+  const resultCard = document.getElementById("result");
+  const scanOverlay = document.getElementById("scan-overlay");
+  const fileInput = document.getElementById("file-input");
+
+  let currentMode = 'front'; 
+  let isModelLoaded = false;
+  let mediaStream = null;
+  let uploadedImageObj = null;
+  let lastAnalyzedLandmarks = null;
+  let frozenSnapshotUrl = null; 
+
+  const CELEB_DB = {
+    male: {
+      top: [
+        { name: "송중기", reason: "관록궁(이마)이 넓고 반듯하며 눈매가 맑아 학업 및 지혜를 상징하는 상정 비율이 매우 유사함" },
+        { name: "강동원", reason: "이마에서 코로 이어지는 라인이 시원스럽고 지적이며 세련된 기운을 발산하는 상" },
+        { name: "공유", reason: "이마가 넓고 반듯하여 사려 깊고 신뢰감을 주는 초년 및 청년기 우수 관상" }
+      ],
+      mid: [
+        { name: "이정재", reason: "재백궁(코)에 힘이 실려 있고 광대뼈가 발달하여 중년의 권력과 거대한 재물을 거머쥐는 관상" },
+        { name: "현빈", reason: "산근부터 코끝까지 융기되어 있어 강한 책임감과 재물 창출 능력이 돋보이는 중정 집중형" },
+        { name: "정우성", reason: "코와 관골의 조화가 뚜렷하여 어디서나 주목받는 카리스마와 재물복을 지님" }
+      ],
+      bot: [
+        { name: "마동석", reason: "노복궁(하관)이 묵직하고 단단하여 말년의 수많은 인복과 의리, 강한 통솔력을 지님" },
+        { name: "조진웅", reason: "지각(턱 끝)이 두툼하고 포용력이 넘쳐 아랫사람을 잘 이끌고 말년운이 평탄함" },
+        { name: "하정우", reason: "단단한 턱선과 뚜렷한 입매로 위기 상황을 기회로 바꾸는 강력한 생명력의 소유자" }
+      ]
+    },
+    female: {
+      top: [
+        { name: "아이유", reason: "명궁(미간)이 맑고 넓어 사고력이 뛰어나며, 직관적 아이디어로 대중의 인기를 끄는 상" },
+        { name: "김태희", reason: "오악이 뚜렷하고 이마의 기운이 좋아 전형적인 총명함과 귀함을 갖춘 최고급 상정" },
+        { name: "박보영", reason: "이마와 눈매가 조화로워 주변에 긍정적인 에너지를 전파하며 사랑받는 복록궁" }
+      ],
+      mid: [
+        { name: "전지현", reason: "현담비(쓸개를 매달아 놓은 듯한 코) 형태를 띠어 재물이 마르지 않고 융성하는 최고의 재물운" },
+        { name: "김혜수", reason: "중정의 카리스마와 관골의 기세가 리더십과 독립적인 성취욕을 강하게 뿜어냄" },
+        { name: "손예진", reason: "코와 눈의 조화가 우아하여 재물과 명예를 부드럽게 감싸 안는 지혜로운 상" }
+      ],
+      bot: [
+        { name: "김고은", reason: "하관과 입술 선이 부드럽고 대인관계의 충돌이 적어 말년으로 갈수록 덕을 쌓는 상" },
+        { name: "윤여정", reason: "팔자주름이 뚜렷하고 턱선이 굳건하여 연륜에서 묻어나는 통찰력과 명예운이 닮음" },
+        { name: "한지민", reason: "입술과 턱 주변의 인복 라인이 포근하여 만인에게 사랑받고 말년이 평안한 관상" }
+      ]
+    }
+  };
+
+  const EYE_POOLS = [
+    { title: "초롱초롱한 관찰력과 통찰의 눈매", desc: "주변의 미세한 변화나 상대방의 진심을 빠르게 간파하는 직관적 안목이 뛰어납니다. 대인관계에서 신뢰를 얻는 무기가 됩니다." },
+    { title: "깊이 있는 사색과 지혜의 눈빛", desc: "감정에 치우치지 않고 객관적으로 상황을 조망하는 능력이 탁월합니다. 중요한 결정을 내릴 때 오판을 줄이는 강력한 힘을 발휘합니다." },
+    { title: "친화력과 다정함이 묻어나는 안광", desc: "첫인상부터 편안함과 따뜻함을 주어 누구나 쉽게 다가오게 만드는 마성의 매력과 인기운을 지니고 있습니다." }
+  ];
+
+  const NOSE_POOLS = [
+    { title: "재물이 고이는 콧방울과 곧은 콧대", desc: "금전 흐름을 읽는 감각이 매우 발달해 있으며, 한번 들어온 재산을 현명하게 불려 나가는 탁월한 자산 관리 능력을 가졌습니다." },
+    { title: "책임감과 주체성이 뚜렷한 코뼈", desc: "자기 주관이 명확하고 어떤 난관이 와도 스스로의 힘으로 개척해 나가는 강인한 독립심과 자존감을 상징합니다." },
+    { title: "균형 잡힌 재백궁과 복록의 코", desc: "금전적으로 큰 굴곡 없이 안정적인 수입을 유지하며, 중년 이후 삶의 질이 수직 상승하는 대길(大吉)의 기운입니다." }
+  ];
+
+  const MOUTH_POOLS = [
+    { title: "복을 부르는 단정한 입매와 언변", desc: "말 한마디에 진심과 품위가 실려 있어 주변 사람들을 내 사람으로 만드는 훌륭한 화술과 말년 인복을 지녔습니다." },
+    { title: "포용력과 신뢰감을 주는 입술 선", desc: "타인의 비밀을 잘 지켜주고 베푸는 것을 좋아하여, 인생의 위기 순간마다 나를 도와줄 진정한 귀인이 주변에 끊이지 않습니다." },
+    { title: "원만한 대인관계와 가정의 온기", desc: "주변 사람들과의 마찰을 지혜롭게 조율하며, 가정과 일터 모두에서 따뜻한 온기를 불어넣는 중심 역할을 도맡아 합니다." }
+  ];
+
+  function clearAllData() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height); 
+    resultCard.style.display = "none";
+    lastAnalyzedLandmarks = null;
+    adjustTip.style.display = "none";
+  }
+
+  function resetStatus(msg = "💡 스캔 준비 완료! 버튼을 클릭해 스캔하세요.") {
+    if (isModelLoaded) {
+      statusMsg.innerText = msg;
+      statusMsg.style.background = "#f1f5f9";
+    }
+  }
+
+  fileInput.addEventListener('change', function(event) {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          uploadedImageObj = img;
+          imgPreview.src = e.target.result;
+          imgPreview.style.display = "block";
+          video.style.display = "none";
+          clearAllData(); 
+          resetStatus("✅ 사진 선택 완료! 분석 버튼을 누르세요.");
+          btnAction.innerText = "🔍 업로드 사진 정밀 분석하기";
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  function switchMode(mode) {
+    if (currentMode === mode) return;
+    currentMode = mode;
+    
+    document.getElementById("tab-front").classList.toggle("active", mode === 'front');
+    document.getElementById("tab-ear").classList.toggle("active", mode === 'ear');
+    document.getElementById("tab-upload").classList.toggle("active", mode === 'upload');
+
+    clearAllData();
+    resetStatus();
+
+    const guideHead = document.getElementById("guide-head");
+    const guideList = document.getElementById("guide-list");
+
+    if (frozenSnapshotUrl) {
+      frozenSnapshotUrl = null;
+    }
+
+    if (mode === 'upload') {
+      stopCamera();
+      video.style.display = "none";
+      if (uploadedImageObj) {
+        imgPreview.src = uploadedImageObj.src;
+        imgPreview.style.display = "block";
+      } else {
+        imgPreview.style.display = "none";
+      }
+      document.getElementById("mode-desc").innerText = "앨범에서 분석할 고화질 사진을 선택해 주세요";
+      btnAction.innerText = uploadedImageObj ? "🔍 업로드 사진 정밀 분석하기" : "📁 사진 선택하기";
+      
+      guideHead.innerText = "📌 사진 업로드 정밀 분석 가이드";
+      guideList.innerHTML = `
+        <li><span class="good">[권장]</span> 이목구비와 얼굴 윤곽이 선명한 정면/측면 사진</li>
+        <li><span class="bad">[주의]</span> 과도한 보정 필터, 모자/마스크로 가려진 사진</li>
+      `;
+    } else {
+      uploadedImageObj = null;
+      imgPreview.style.display = "none";
+      video.style.display = "block";
+      startCamera();
+
+      if (mode === 'ear') {
+        document.getElementById("mode-desc").innerText = "얼굴 측면과 귀 형태가 명확히 나오도록 위치를 잡으세요";
+        btnAction.innerText = "👂 측면 & 귀 정밀 스캔하기";
+        guideHead.innerText = "📌 측면 및 귀(채청관) 촬영 가이드";
+        guideList.innerHTML = `
+          <li><span class="good">[권장]</span> 귀 전체 윤곽과 턱 선이 명확하게 드러나도록 고개를 90도 가까이 돌려주세요.</li>
+          <li><span class="bad">[주의]</span> 정면을 응시하면 분석이 불가능합니다. 머리카락으로 귀를 가리지 마세요.</li>
+        `;
+      } else { 
+        document.getElementById("mode-desc").innerText = "정면을 응시하고 화면 중앙에 위치하세요";
+        btnAction.innerText = "📸 정면 관상 정밀 스캔하기";
+        guideHead.innerText = "📌 정면 관상 촬영 가이드";
+        guideList.innerHTML = `
+          <li><span class="good">[권장]</span> 정면 시선, 조명이 밝고 이마/눈/코/입이 명확한 사진</li>
+          <li><span class="bad">[주의]</span> 안경/모자/마스크 착용, 강한 보정 필터, 어두운 사진</li>
+        `;
+      }
+    }
+  }
+
+  async function startCamera() {
+    if (currentMode === 'upload') return;
+    try {
+      if (!mediaStream) {
+        mediaStream = await navigator.mediaDevices.getUserMedia({ 
+          video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" }, 
+          audio: false 
+        });
+      }
+      video.srcObject = mediaStream;
+      await video.play();
+    } catch (err) {
+      statusMsg.innerText = "⚠️ 카메라에 접근할 수 없습니다. (사진 업로드 모드를 이용하세요)";
+      statusMsg.style.background = "#fee2e2";
+    }
+  }
+
+  function stopCamera() {
+    if (mediaStream) {
+      mediaStream.getTracks().forEach(track => track.stop());
+      mediaStream = null;
+    }
+    video.srcObject = null;
+  }
+
+  function showAdjustGuide(msg = "카메라 정중앙에 얼굴을 맞추고 이마와 턱 끝이 잘 나오도록 조절해 주세요.") {
+    scanOverlay.classList.remove("active");
+    if (currentMode !== 'upload') {
+      imgPreview.style.display = "none";
+      video.style.display = "block";
+      if (video.paused) video.play().catch(e => {});
+    }
+    statusMsg.innerText = "⚠️ 분석 실패. 가이드에 맞춰 위치를 조정해주세요.";
+    statusMsg.style.background = "#fee2e2";
+    adjustTipText.innerText = msg;
+    adjustTip.style.display = "block";
+  }
+
+  function handleActionClick() {
+    if (currentMode === 'upload' && !uploadedImageObj) {
+      fileInput.click();
+      return;
+    }
+    if (!isModelLoaded) {
+      alert("AI 인공지능 모델 다운로드 중입니다. 잠시만 기다려주세요.");
+      return;
+    }
+    runAnalysis();
+  }
+
+  async function runAnalysis() {
+    clearAllData();
+
+    if (currentMode !== 'upload') {
+      statusMsg.innerText = "📸 잠시만 정면/측면을 유지해 주세요... (준비 중)";
+      statusMsg.style.background = "#e2e8f0";
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+
+    scanOverlay.classList.add("active");
+    statusMsg.innerText = "⏳ AI관상 정밀 스캔 중... (이목구비 좌표 및 측면 윤곽 측정)";
+    statusMsg.style.background = "#f1f5f9";
+
+    const targetEl = currentMode === 'upload' ? imgPreview : video;
+    
+    if (currentMode !== 'upload' && video.videoWidth > 0) {
+      const snapCanvas = document.createElement('canvas');
+      snapCanvas.width = video.videoWidth;
+      snapCanvas.height = video.videoHeight;
+      snapCanvas.getContext('2d').drawImage(video, 0, 0);
+      frozenSnapshotUrl = snapCanvas.toDataURL('image/png');
+      
+      imgPreview.src = frozenSnapshotUrl;
+      imgPreview.style.display = "block";
+      video.style.display = "none";
+    }
+
+    const w = targetEl.videoWidth || targetEl.naturalWidth || targetEl.clientWidth || 640;
+    const h = targetEl.videoHeight || targetEl.naturalHeight || targetEl.clientHeight || 480;
+
+    canvas.width = w;
+    canvas.height = h;
+    
+    const displaySize = { width: w, height: h };
+    faceapi.matchDimensions(canvas, displaySize);
+
+    setTimeout(async () => {
+      try {
+        const detections = await faceapi.detectSingleFace(targetEl, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.1 }))
+                                        .withFaceLandmarks()
+                                        .withAgeAndGender();
+
+        scanOverlay.classList.remove("active");
+
+        if (detections) {
+          const resized = faceapi.resizeResults(detections, displaySize);
+          const pos = resized.landmarks.positions;
+
+          if (currentMode === 'ear') {
+            const leftDist = Math.abs(pos[30].x - pos[0].x); 
+            const rightDist = Math.abs(pos[16].x - pos[30].x); 
+            const ratio = Math.max(leftDist, rightDist) / Math.min(leftDist, rightDist);
+            if (ratio < 2.0) {
+              showAdjustGuide("⚠️ 정면 얼굴이 감지되었습니다! 귀와 턱선이 뚜렷하게 보이도록 고개를 옆으로 완전히 돌려주세요.");
+              return; 
+            }
+          }
+          
+          lastAnalyzedLandmarks = resized;
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          
+          if (currentMode === 'ear') {
+            // 🌟 [신규 추가] 귀 및 측면 턱선 스캔 시 시각적 신뢰감을 주는 커스텀 점·선 가이드 렌더링
+            drawEarScanVisualization(ctx, pos, w, h);
+          } else {
+            // 정면 모드 기본 랜드마크
+            faceapi.draw.drawFaceLandmarks(canvas, resized, {
+              pointColor: { color: '#0284c7', lineWidth: 1 },
+              boxColor: { color: '#b45309', lineWidth: 1 }
+            });
+          }
+
+          if (currentMode === 'ear') generateSideReport(resized);
+          else generateFrontReport(resized);
+
+          statusMsg.innerText = "✅ 정밀 관상 분석이 완료되었습니다!";
+          statusMsg.style.background = "#dcfce7";
+        } else {
+          showAdjustGuide();
+        }
+      } catch (e) {
+        console.error(e);
+        scanOverlay.classList.remove("active");
+        showAdjustGuide();
+      }
+    }, 2000);
+  }
+
+  // 🌟 귀/측면 모드 전용 시각화 함수 (귀 윤곽 추정 포인트 및 보조선, 십자 스캐너 효과)
+  function drawEarScanVisualization(ctx, pos, w, h) {
+    // 1. 턱선 및 옆모습 윤곽선 강조 연결
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    // 턱 끝에서 귀 방향으로 이어지는 라인 시뮬레이션
+    let startIdx = pos[8].x < w / 2 ? 0 : 16; // 얼굴 방향에 따라 좌우 선택
+    ctx.moveTo(pos[startIdx].x, pos[startIdx].y);
+    for (let i = startIdx; i !== (startIdx === 0 ? 5 : 11); i += (startIdx === 0 ? 1 : -1)) {
+      ctx.lineTo(pos[i].x, pos[i].y);
+    }
+    ctx.stroke();
+
+    // 2. 가상의 귀 위치에 '채청관(採聽)' 정밀 분석 포인트 타겟팅 생성 (관상학적 포인트 기조)
+    let earX = startIdx === 0 ? pos[0].x - (w * 0.08) : pos[16].x + (w * 0.08);
+    let earY = pos[27].y; // 눈썹-코 높이 부근
+
+    // 타겟 조준 박스 그리기
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(earX - 35, earY - 45, 70, 90);
+
+    // 내부 스캔 점들 (귀 륜, 곽, 귓불 위치 시각화)
+    const earPoints = [
+      { x: earX, y: earY - 30, label: "륜(輪)" },
+      { x: earX, y: earY, label: "곽(廓)" },
+      { x: earX, y: earY + 30, label: "수주(垂珠)" }
+    ];
+
+    earPoints.forEach((pt, idx) => {
+      ctx.fillStyle = '#10b981';
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, 5, 0, 2 * Math.PI);
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // 글자 라벨
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.fillText(pt.x > w / 2 ? pt.x + 10 : pt.x - 45, pt.y + 4, pt.label);
+    });
+
+    // 3. 십자 조준선 및 하관 분석선
+    ctx.strokeStyle = 'rgba(59, 130, 246, 0.7)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(earX, 0); ctx.lineTo(earX, h); // 귀 수직선
+    ctx.moveTo(0, pos[8].y); ctx.lineTo(w, pos[8].y); // 턱 수평선
+    ctx.stroke();
+    ctx.setLineDash([]); // 초기화
+  }
+
+  function getUniqueHash(pos) {
+    let sumX = 0, sumY = 0;
+    for (let i = 0; i < pos.length; i += 3) {
+      sumX += pos[i].x;
+      sumY += pos[i].y;
+    }
+    return Math.floor(Math.abs(Math.sin(sumX) * Math.cos(sumY)) * 100000);
+  }
+
+  function generateFrontReport(detections) {
+    const isMale = detections.gender === "male";
+    const age = Math.round(detections.age);
+    const pos = detections.landmarks.positions;
+    const hash = getUniqueHash(pos);
+
+    document.getElementById("result-main-title").innerText = "📊 정면 정밀 관상 리포트";
+    document.getElementById("res-gender").innerText = isMale ? "남성 ♂️" : "여성 ♀️";
+    document.getElementById("res-age").innerText = `약 ${age}세`;
+    document.getElementById("celeb-container").style.display = "block";
+    document.getElementById("ratio-container").style.display = "flex";
+
+    document.getElementById("score-love").innerText = `${(hash % 11) + 89}점 ⭐`;
+    document.getElementById("score-wealth").innerText = `${((hash >> 2) % 11) + 89}점 💰`;
+    document.getElementById("score-career").innerText = `${((hash >> 4) % 11) + 89}점 🏆`;
+
+    const topY = pos[21].y; const midY = pos[33].y; const botY = pos[8].y;  
+    const topH = Math.max(10, topY - (midY - topY) * 0.85);
+    const topLen = Math.abs(topY - topH);
+    const midLen = Math.abs(midY - topY);
+    const botLen = Math.abs(botY - midY);
+    const sum = topLen + midLen + botLen;
+
+    const tPct = Math.round((topLen / sum) * 100);
+    const mPct = Math.round((midLen / sum) * 100);
+    const bPct = 100 - tPct - mPct;
+
+    document.getElementById("r-top").innerText = `${tPct}%`;
+    document.getElementById("r-mid").innerText = `${mPct}%`;
+    document.getElementById("r-bot").innerText = `${bPct}%`;
+
+    const genderKey = isMale ? 'male' : 'female';
+    let pool = CELEB_DB[genderKey].mid;
+    let elementType = "토(土)형 - 두터운 신의와 포용의 상";
+
+    if (tPct >= mPct && tPct >= bPct) {
+      elementType = "목(木)형 - 기획력과 두뇌 회전이 빠른 상";
+      pool = CELEB_DB[genderKey].top;
+    } else if (mPct >= tPct && mPct >= bPct) {
+      elementType = "금(金)형 - 강한 결단력과 재물 성취의 상";
+      pool = CELEB_DB[genderKey].mid;
+    } else {
+      elementType = "수(水)형 - 유연한 대처와 만인에게 사랑받는 상";
+      pool = CELEB_DB[genderKey].bot;
+    }
+
+    const matchedCeleb = pool[hash % pool.length];
+    document.getElementById("res-element").innerText = elementType;
+    document.getElementById("res-celeb").innerText = `${matchedCeleb.name} (싱크로율 ${ (hash % 7) + 92 }%)`;
+    document.getElementById("res-celeb-reason").innerText = `💡 [매칭 근거] ${matchedCeleb.reason}`;
+
+    const eyeItem = EYE_POOLS[hash % EYE_POOLS.length];
+    const noseItem = NOSE_POOLS[(hash >> 1) % NOSE_POOLS.length];
+    const mouthItem = MOUTH_POOLS[(hash >> 2) % MOUTH_POOLS.length];
+
+    const detailsDiv = document.getElementById("details-container");
+    detailsDiv.innerHTML = `
+      <div class="detail-section" style="border-left-color: #0284c7;">
+        <div class="detail-header"><h4>👀 감수성 & 인기운 (눈·눈썹)</h4></div>
+        <div class="shape-desc">📐 [형태 분석] ${eyeItem.title}</div>
+        <div class="original-data">💡 [측정 결과] 양눈썹 사이(명궁)와 눈동자의 배치 비율이 독특한 균형을 이룹니다. ${eyeItem.desc}</div>
+        <div class="analysis-grid">
+          <div class="good-box"><strong>🟢 연애/인기 장점</strong>상대방의 사소한 감정 변화를 잘 읽어주어 연애 및 대인관계에서 깊은 신뢰와 안정감을 줍니다.</div>
+          <div class="bad-box"><strong>🔴 주의할 점</strong>때로는 타인의 시선이나 평가에 마음이 쉽게 흔들릴 수 있으니 본인만의 중심을 지키는 것이 중요합니다.</div>
+        </div>
+      </div>
+
+      <div class="detail-section" style="border-left-color: #d97706;">
+        <div class="detail-header"><h4>👃 재물운 & 자존감 (코·관골)</h4></div>
+        <div class="shape-desc">📐 [형태 분석] ${noseItem.title}</div>
+        <div class="original-data">💡 [측정 결과] 콧대와 광대(관골)의 입체적 돌출도가 조화를 이룹니다. ${noseItem.desc}</div>
+        <div class="analysis-grid">
+          <div class="good-box"><strong>🟢 재물운 장점</strong>금전을 다루는 감각이 남다르며, 목표를 향해 나아가는 추진력으로 중년 이후 확실한 성취를 이룹니다.</div>
+          <div class="bad-box"><strong>🔴 주의할 점</strong>지나친 완벽주의적 성향 때문에 혼자서 모든 것을 짊어지려 할 수 있으니 주변에 조언을 구하세요.</div>
+        </div>
+      </div>
+
+      <div class="detail-section" style="border-left-color: #16a34a;">
+        <div class="detail-header"><h4>👄 애정운 & 말년복 (입·하관)</h4></div>
+        <div class="shape-desc">📐 [형태 분석] ${mouthItem.title}</div>
+        <div class="original-data">💡 [측정 결과] 입술의 두께와 인중, 턱 끝으로 이어지는 곡선이 안정감을 줍니다. ${mouthItem.desc}</div>
+        <div class="analysis-grid">
+          <div class="good-box"><strong>🟢 애정/말년 장점</strong>다정한 표현력과 넓은 포용력 덕분에 주변 사람들로부터 늘 사랑과 지지를 받으며 말년이 평안합니다.</div>
+          <div class="bad-box"><strong>🔴 주의할 점</strong>누구에게나 좋은 사람이 되려다 스스로 지칠 수 있으니 가끔은 거절하는 지혜도 필요합니다.</div>
+        </div>
+      </div>
+
+      <div class="detail-section" style="border-left-color: #db2777;">
+        <div class="detail-header"><h4>✨ 현재 기운 & 건강운 (얼굴빛·혈색)</h4></div>
+        <div class="shape-desc">📐 [형태 분석] 오악의 윤곽이 조화로우며 의욕적인 에너지 감지</div>
+        <div class="original-data">💡 [측정 결과] 현재 전체적인 얼굴 기운이 상생(相生)하는 활기찬 상태입니다. 새로운 도전이나 중요한 결정을 내리기 아주 길한 타이밍입니다.</div>
+        <div class="analysis-grid">
+          <div class="good-box"><strong>🟢 활력 장점</strong>의욕과 추진력이 최고조에 달해 있어 마음먹은 일을 빠르게 현실화할 수 있는 강력한 에너지가 흐릅니다.</div>
+          <div class="bad-box"><strong>🔴 주의할 점</strong>에너지가 넘치는 만큼 과로하기 쉬우니 틈틈이 스트레칭과 휴식으로 컨디션을 조절하세요.</div>
+        </div>
+      </div>
+    `;
+
+    document.getElementById("desc-summary").innerText = 
+      `당신은 ${elementType.split('-')[0]}의 고유한 기운을 타고났으며, 연애운과 재물운의 흐름이 매우 조화롭습니다. 본인만의 개성과 직관을 믿고 나아간다면 매 순간 풍성한 결실을 맺을 것입니다.`;
+
+    resultCard.style.display = "block";
+  }
+
+  function generateSideReport(detections) {
+    const isMale = detections.gender === "male";
+    const age = Math.round(detections.age);
+    const hash = getUniqueHash(detections.landmarks.positions);
+
+    document.getElementById("result-main-title").innerText = "📊 측면(귀/턱선) 심층 관상 리포트";
+    document.getElementById("res-gender").innerText = isMale ? "남성 ♂️" : "여성 ♀️";
+    document.getElementById("res-age").innerText = `약 ${age}세`;
+    
+    document.getElementById("celeb-container").style.display = "none";
+    document.getElementById("ratio-container").style.display = "none";
+    document.getElementById("res-element").innerText = "채청(採聽) - 정보 수용과 수명";
+
+    document.getElementById("score-love").innerText = `${(hash % 10) + 90}점 ⭐`;
+    document.getElementById("score-wealth").innerText = `${((hash >> 2) % 10) + 90}점 💰`;
+    document.getElementById("score-career").innerText = `${((hash >> 4) % 10) + 90}점 🏆`;
+
+    const detailsDiv = document.getElementById("details-container");
+    detailsDiv.innerHTML = `
+      <div class="detail-section" style="border-left-color: #db2777;">
+        <div class="detail-header"><h4>👂 채청관(귀) - 지혜수용 & 평생의 복록</h4></div>
+        <div class="shape-desc">📐 [형태 분석] 윤곽이 선명하고 귓불이 도톰하게 맺힌 상</div>
+        <div class="original-data">💡 [측정 결과] 귀의 각도와 크기 비율이 매우 안정적입니다. 타인의 조언을 유연하게 수용할 줄 알며, 인생의 고비마다 귀인의 조력이 따르는 복된 관상입니다.</div>
+        <div class="analysis-grid">
+          <div class="good-box"><strong>🟢 장점</strong>주변의 소중한 의견을 편견 없이 경청하여 위기 상황을 지혜롭게 돌파하는 탁월한 문제 해결력을 지녔습니다.</div>
+          <div class="bad-box"><strong>🔴 주의</strong>때로는 너무 많은 사람의 말을 수용하느라 본인의 기준이 흔들릴 수 있으니 줏대를 지키세요.</div>
+        </div>
+      </div>
+      <div class="detail-section" style="border-left-color: #7c3aed;">
+        <div class="detail-header"><h4>🗿 측면 하악선(턱 골격) - 지구력 & 실천력</h4></div>
+        <div class="shape-desc">📐 [형태 분석] 귀 밑에서 턱 끝으로 이어지는 단단한 골격 라인</div>
+        <div class="original-data">💡 [측정 결과] 하악 골격의 밀도가 견고하여 강인한 지구력과 투지를 보여줍니다. 목표를 향해 끝까지 밀어붙이는 뚝심이 돋보입니다.</div>
+        <div class="analysis-grid">
+          <div class="good-box"><strong>🟢 장점</strong>어떤 역경에도 쉽게 꺾이지 않는 바위 같은 뚝심으로 마침내 원하는 성과를 기어코 만들어내는 엄청난 실천력의 소유자입니다.</div>
+          <div class="bad-box"><strong>🔴 주의</strong>간혹 본인의 고집이나 방식만을 지나치게 내세울 수 있으니 유연한 태도를 겸비하면 완벽합니다.</div>
+        </div>
+      </div>
+    `;
+
+    document.getElementById("desc-summary").innerText = "측면 턱선의 단단한 뚝심과 귀의 유연한 수용력을 함께 지니셨습니다. 소신을 지키며 타인의 지혜를 흡수한다면 어떤 목표든 반드시 이룰 수 있습니다.";
+    resultCard.style.display = "block";
+  }
+
+  async function saveResultImage() {
+    const captureContainer = document.getElementById("capture-container");
+    if (!captureContainer) return;
+    
+    statusMsg.innerText = "⏳ 캡처 및 이미지 저장 중...";
+    
+    try {
+      if (lastAnalyzedLandmarks) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (currentMode === 'ear') {
+          drawEarScanVisualization(ctx, lastAnalyzedLandmarks.landmarks.positions, canvas.width, canvas.height);
+        } else {
+          faceapi.draw.drawFaceLandmarks(canvas, lastAnalyzedLandmarks, {
+            pointColor: { color: '#0284c7', lineWidth: 1 },
+            boxColor: { color: '#b45309', lineWidth: 1 }
+          });
+        }
+      }
+
+      const canvasResult = await html2canvas(captureContainer, { backgroundColor: '#ffffff', scale: 2, useCORS: true });
+      const imageURL = canvasResult.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.href = imageURL; 
+      link.download = 'AI정밀관상_분석결과.png';
+      document.body.appendChild(link); 
+      link.click(); 
+      document.body.removeChild(link);
+
+      statusMsg.innerText = "✅ 기기 사진 앱/다운로드 폴더에 저장되었습니다!";
+      statusMsg.style.background = "#dcfce7";
+    } catch (e) {
+      console.error(e);
+      alert("이미지 저장 중 오류가 발생했습니다.");
+    } finally {
+      if (currentMode !== 'upload') {
+        if (frozenSnapshotUrl) {
+          imgPreview.src = frozenSnapshotUrl;
+          imgPreview.style.display = "block";
+          video.style.display = "none";
+        } else {
+          imgPreview.style.display = "none";
+          video.style.display = "block";
+          if (video.paused && mediaStream) {
+            video.play().catch(e => {});
+          }
+        }
+      } else {
+        if (uploadedImageObj) {
+          imgPreview.style.display = "block";
+          video.style.display = "none";
+        }
+      }
+    }
+  }
+
+  async function shareResult() {
+    if (navigator.share) {
+      try { await navigator.share({ title: 'AI 정밀 관상', text: '나의 AI 관상 분석 결과 확인하기 🔮', url: window.location.href }); } 
+      catch (err) { console.log('공유 취소:', err); }
+    } else {
+      try { await navigator.clipboard.writeText(window.location.href); alert('링크가 복사되었습니다!'); } 
+      catch (err) { alert('복사에 실패했습니다.'); }
+    }
+  }
+
+  async function initAI() {
+    try {
+      const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
+      statusMsg.innerText = "⏳ AI 관상 신경망 로딩 중...";
+      await Promise.all([
+        faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+        faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+        faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL)
+      ]);
+      isModelLoaded = true;
+      statusMsg.innerText = "💡 준비 완료! 사진을 선택하거나 스캔 버튼을 누르세요.";
+      statusMsg.style.background = "#f1f5f9";
+      if (currentMode !== 'upload') startCamera();
+    } catch (e) {
+      statusMsg.innerText = "⚠️ 외부 AI 모델 연결 실패 (네트워크를 확인하세요)";
+      statusMsg.style.background = "#fee2e2";
+    }
+  }
+
+  window.addEventListener("DOMContentLoaded", initAI);
+</script>
+
+</body>
+</html>
