@@ -74,6 +74,7 @@
         .badge-emerald { background: #d1fae5; color: #047857; }
         .badge-amber { background: #fef3c7; color: #b45309; }
         .badge-purple { background: #f3e8ff; color: #6b21a8; }
+        .badge-pink { background: #fce7f3; color: #be185d; }
         .badge-gray { background: #f3f4f6; color: #6b7280; }
     </style>
 </head>
@@ -112,6 +113,14 @@
                 theme: "indigo"
             },
             {
+                title: "AI 인연 올인원 궁합",
+                desc: "이름 획수 해부도, 띠, 별자리, 혈액형으로 완벽한 인연을 분석합니다.",
+                url: "lover.html",
+                icon: "💕",
+                badge: "All-in-One",
+                theme: "pink"
+            },
+            {
                 title: "정통사주명리",
                 desc: "태어난 사주 원국을 바탕으로 깊이 있는 운세를 확인합니다.",
                 url: "saju.html",
@@ -131,7 +140,7 @@
 
         const grid = document.getElementById('menuGrid');
         
-        // 정통사주명리 및 신토정비결 서비스 준비중 처리 키워드
+        // 정통사주명리 및 신토정비결 서비스 준비중 처리 키워드[cite: 2]
         const preparingKeywords = ["정통사주명리", "신토정", "사주명리"];
 
         fortuneMenus.forEach(menu => {
