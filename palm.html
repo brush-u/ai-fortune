@@ -17,13 +17,15 @@
     body {
       margin: 0;
       padding: 0;
-      width: 100vw;
+      width: 100%;
       overflow-x: hidden;
+      background-color: var(--bg-main, #0f172a);
     }
     .app-container {
       width: 100%;
-      max-width: 100% !important;
-      padding: 10px !important;
+      max-width: 480px; /* 모바일 및 태블릿 최적 맥스 폭 설정 */
+      margin: 0 auto;
+      padding: 12px !important;
       box-sizing: border-box;
     }
     .white-card {
@@ -38,21 +40,21 @@
       padding: 12px;
       margin-bottom: 16px;
       text-align: left;
-      font-size: 0.95rem;
-      line-height: 1.5;
+      font-size: 0.9rem;
+      line-height: 1.4;
       color: var(--text-sub);
     }
-    .guide-box .guide-title { color: #059669; font-weight: bold; margin-bottom: 6px; font-size: 1rem; }
+    .guide-box .guide-title { color: #059669; font-weight: bold; margin-bottom: 6px; font-size: 0.95rem; }
     
     .status-msg {
       background: var(--bg-secondary);
       color: var(--text-main);
-      padding: 14px;
+      padding: 12px;
       border-radius: var(--radius-md);
-      font-size: 1.05rem;
-      margin-bottom: 16px;
+      font-size: 0.95rem;
+      margin-bottom: 14px;
       font-weight: bold;
-      min-height: 50px;
+      min-height: 44px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -66,7 +68,7 @@
       background: #000;
       border-radius: var(--radius-md);
       overflow: hidden;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
       border: 2px solid var(--border-color);
       aspect-ratio: 3 / 4; /* 모바일 세로 화면 비율에 최적화 */
       display: flex;
@@ -107,7 +109,7 @@
       color: #fff;
       padding: 6px 12px;
       border-radius: 20px;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       font-weight: bold;
       text-align: center;
     }
@@ -144,8 +146,8 @@
       background: var(--bg-secondary);
       color: var(--text-main);
       border: 1px solid var(--border-color);
-      padding: 10px 14px;
-      font-size: 0.9rem;
+      padding: 8px 12px;
+      font-size: 0.85rem;
       font-weight: bold;
       border-radius: var(--radius-md);
       cursor: pointer;
@@ -156,8 +158,8 @@
 
     .main-btn-group {
       display: flex;
-      gap: 10px;
-      margin-bottom: 16px;
+      gap: 8px;
+      margin-bottom: 14px;
       align-items: center;
     }
 
@@ -165,8 +167,8 @@
       background: linear-gradient(135deg, #059669, #10b981);
       color: white;
       border: none;
-      padding: 14px;
-      font-size: 1.05rem;
+      padding: 12px;
+      font-size: 0.98rem;
       font-weight: bold;
       border-radius: var(--radius-md);
       cursor: pointer;
@@ -178,8 +180,8 @@
       background: var(--bg-secondary);
       color: var(--text-main);
       border: 1px solid var(--border-color);
-      padding: 14px;
-      font-size: 0.95rem;
+      padding: 12px;
+      font-size: 0.9rem;
       font-weight: bold;
       border-radius: var(--radius-md);
       cursor: pointer;
@@ -192,100 +194,105 @@
       background: #f3f4f6;
       color: #374151;
       border: 1px solid #d1d5db;
-      padding: 14px;
-      font-size: 1rem;
+      padding: 12px;
+      font-size: 0.95rem;
       font-weight: bold;
       border-radius: var(--radius-md);
       cursor: pointer;
       width: 100%;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
       display: none;
       text-align: center;
     }
 
     .result-card {
-      margin-top: 16px;
+      margin-top: 14px;
       background: var(--bg-card);
-      padding: 22px;
+      padding: 16px;
       border-radius: var(--radius-lg);
       text-align: left;
       display: none;
       border: 1px solid var(--border-color);
       box-shadow: var(--shadow-subtle);
+      box-sizing: border-box;
+      width: 100%;
+      overflow: hidden;
     }
     .result-card h3 { 
       color: #047857; 
-      margin-bottom: 16px; 
-      font-size: 1.35rem; 
+      margin-bottom: 14px; 
+      font-size: 1.2rem; 
       text-align: center; 
       border-bottom: 2px solid var(--border-color); 
-      padding-bottom: 12px; 
+      padding-bottom: 10px; 
     }
 
     .fortune-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin-bottom: 18px;
+      gap: 6px;
+      margin-bottom: 14px;
     }
     .fortune-box {
       background: var(--bg-secondary);
       border: 1px solid var(--border-color);
-      padding: 12px 6px;
+      padding: 8px 4px;
       border-radius: var(--radius-md);
       text-align: center;
     }
-    .fortune-box .f-title { font-size: 0.88rem; color: var(--text-sub); margin-bottom: 4px; font-weight: bold; }
-    .fortune-box .f-score { font-size: 1.1rem; font-weight: bold; color: #059669; }
+    .fortune-box .f-title { font-size: 0.78rem; color: var(--text-sub); margin-bottom: 3px; font-weight: bold; }
+    .fortune-box .f-score { font-size: 0.95rem; font-weight: bold; color: #059669; }
 
     .detail-section {
       background: var(--bg-secondary);
-      padding: 16px;
+      padding: 12px;
       border-radius: var(--radius-md);
-      margin-bottom: 14px;
+      margin-bottom: 12px;
       border: 1px solid var(--border-color);
+      box-sizing: border-box;
+      word-break: keep-all;
     }
-    .detail-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .detail-section h4 { font-size: 1.1rem; font-weight: bold; }
+    .detail-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .detail-section h4 { font-size: 1rem; font-weight: bold; }
 
-    .shape-desc { font-size: 0.95rem; margin-bottom: 8px; font-weight: bold; }
-    .original-data { font-size: 0.92rem; color: var(--text-main); line-height: 1.6; margin-bottom: 10px; }
-    .analysis-grid { display: flex; flex-direction: column; gap: 10px; }
+    .shape-desc { font-size: 0.88rem; margin-bottom: 6px; font-weight: bold; }
+    .original-data { font-size: 0.85rem; color: var(--text-main); line-height: 1.5; margin-bottom: 8px; }
+    .analysis-grid { display: flex; flex-direction: column; gap: 8px; }
     
     .good-box {
-      background: #f0fdf4; border: 1px solid #bbf7d0; padding: 10px 12px; border-radius: 8px; font-size: 0.9rem; line-height: 1.5; color: #166534;
+      background: #f0fdf4; border: 1px solid #bbf7d0; padding: 8px 10px; border-radius: 6px; font-size: 0.85rem; line-height: 1.4; color: #166534;
     }
-    .good-box strong { color: #15803d; display: block; margin-bottom: 4px; font-size: 0.95rem; }
+    .good-box strong { color: #15803d; display: block; margin-bottom: 2px; font-size: 0.88rem; }
 
     .bad-box {
-      background: #fef2f2; border: 1px solid #fecaca; padding: 10px 12px; border-radius: 8px; font-size: 0.9rem; line-height: 1.5; color: #991b1b;
+      background: #fef2f2; border: 1px solid #fecaca; padding: 8px 10px; border-radius: 6px; font-size: 0.85rem; line-height: 1.4; color: #991b1b;
     }
-    .bad-box strong { color: #dc2626; display: block; margin-bottom: 4px; font-size: 0.95rem; }
+    .bad-box strong { color: #dc2626; display: block; margin-bottom: 2px; font-size: 0.88rem; }
 
     .legend-box {
       display: flex;
       justify-content: space-around;
       background: var(--bg-secondary);
-      padding: 12px;
+      padding: 10px;
       border-radius: var(--radius-md);
-      margin-bottom: 16px;
-      font-size: 0.95rem;
+      margin-bottom: 14px;
+      font-size: 0.88rem;
       font-weight: bold;
       border: 1px solid var(--border-color);
     }
-    .legend-item { display: flex; align-items: center; gap: 8px; }
-    .dot { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
 
     .share-action-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-top: 20px;
-      padding-top: 16px;
+      gap: 10px;
+      margin-top: 14px;
+      padding-top: 12px;
       border-top: 2px dashed var(--border-color);
     }
     .share-btn {
-      padding: 14px; border-radius: var(--radius-md); font-size: 1rem; font-weight: bold; border: none; cursor: pointer;
+      padding: 12px; border-radius: var(--radius-md); font-size: 0.95rem; font-weight: bold; border: none; cursor: pointer;
     }
     .btn-save { background: var(--bg-secondary); color: var(--text-main); border: 1px solid var(--border-color); }
     .btn-share { background: #10b981; color: #ffffff; }
@@ -294,21 +301,21 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 12px 16px;
+      padding: 10px 14px;
       background: var(--bg-card);
       border-bottom: 1px solid var(--border-color);
       position: sticky;
       top: 0;
       z-index: 100;
     }
-    .nav-brand { font-weight: bold; text-decoration: none; color: var(--text-main); font-size: 1.1rem; }
+    .nav-brand { font-weight: bold; text-decoration: none; color: var(--text-main); font-size: 1rem; }
     .nav-home-btn {
       background: var(--bg-secondary);
       color: var(--text-main);
       border: 1px solid var(--border-color);
-      padding: 6px 12px;
+      padding: 5px 10px;
       border-radius: var(--radius-sm);
-      font-size: 0.9rem;
+      font-size: 0.82rem;
       font-weight: bold;
       text-decoration: none;
       display: inline-flex;
@@ -320,28 +327,28 @@
 <body>
 
   <nav class="app-nav">
-    <a href="index.html" class="nav-brand">🔮 AI 운세 센터</a>
-    <a href="index.html" class="nav-home-btn" id="btn-back-home">🏠 AI 운세 센터 홈</a>
+    <a href="#" class="nav-brand">🔮 AI 운세 센터</a>
+    <a class="nav-home-btn" id="btn-back-home" onclick="goHome()">🏠 AI 운세 센터 홈</a>
   </nav>
 
   <div class="app-container" id="capture-container">
     <div class="white-card">
-      <div style="text-align: center; margin-bottom: 16px;">
-        <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 6px;">✋ AI 손금(수상) 정밀 분석</h2>
-        <p style="color: var(--text-sub); font-size: 0.98rem;">AI 비전 모델이 손바닥 해부학적 관절을 분석하여 최적의 손금 곡선을 자동 매핑합니다</p>
+      <div style="text-align: center; margin-bottom: 14px;">
+        <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 4px;">✋ AI 손금(수상) 정밀 분석</h2>
+        <p style="color: var(--text-sub); font-size: 0.88rem;">AI 비전 모델이 손바닥 관절을 분석하여 최적의 손금 곡선을 매핑합니다</p>
       </div>
 
       <div class="guide-box">
         <div class="guide-title">🤖 AI 비전 곡선 피팅 엔진 적용 안내</div>
         <ul>
-          <li><strong>완자동 딥러닝 핏:</strong> 수동 조정을 없애고, MediaPipe 21개 뼈대 랜드마크의 기하학적 비율(손바닥 폭, 길이, 손가락 기점)을 실시간으로 역산합니다.</li>
-          <li><strong>정밀 곡선 연동:</strong> 각 개인의 손바닥 크기와 형태에 맞추어 생명선·두뇌선·운명선의 곡률이 오차 없이 정확히 피팅되도록 고도화되었습니다.</li>
+          <li><strong>완자동 딥러닝 핏:</strong> 수동 조정을 없애고 21개 랜드마크 비율을 역산합니다.</li>
+          <li><strong>정밀 곡선 연동:</strong> 생명선·두뇌선·운명선의 곡률이 오차 없이 정확히 피팅됩니다.</li>
         </ul>
       </div>
 
       <div class="top-controls">
-        <button id="btn-switch-cam" class="cam-switch-btn" onclick="switchCamera()">🔄 카메라 전환 (전면/후면)</button>
-        <div id="ai-status-badge" style="font-size: 0.85rem; color: #059669; font-weight: bold;">🟢 AI 비전 엔진 대기 중</div>
+        <button id="btn-switch-cam" class="cam-switch-btn" onclick="switchCamera()">🔄 카메라 전환</button>
+        <div id="ai-status-badge" style="font-size: 0.8rem; color: #059669; font-weight: bold;">🟢 AI 대기 중</div>
       </div>
 
       <div id="status" class="status-msg">💡 손바닥 안쪽이 보이도록 비춰주세요...</div>
@@ -381,26 +388,26 @@
 
         <div class="fortune-grid">
           <div class="fortune-box">
-            <div class="f-title">❤️ 생명선 (체력)</div>
+            <div class="f-title">❤️ 생명선</div>
             <div class="f-score" id="score-life">95점 💪</div>
           </div>
           <div class="fortune-box">
-            <div class="f-title">💡 두뇌선 (적성)</div>
+            <div class="f-title">💡 두뇌선</div>
             <div class="f-score" id="score-brain">92점 🧠</div>
           </div>
           <div class="fortune-box">
-            <div class="f-title">💰 운명선 (재물)</div>
+            <div class="f-title">💰 운명선</div>
             <div class="f-score" id="score-fate">94점 💰</div>
           </div>
         </div>
 
         <div id="details-container"></div>
 
-        <div class="detail-section" style="border-left: 6px solid #059669; margin-top: 16px;">
+        <div class="detail-section" style="border-left: 6px solid #059669; margin-top: 12px;">
           <div class="detail-header">
-            <h4 style="color: #065f46; font-size: 1.15rem;">💡 종합 평론 및 개운 조언</h4>
+            <h4 style="color: #065f46;">💡 종합 평론 및 개운 조언</h4>
           </div>
-            <p id="desc-summary" style="font-size: 0.98rem; line-height: 1.7; color: var(--text-main);">-</p>
+          <p id="desc-summary" style="font-size: 0.9rem; line-height: 1.6; color: var(--text-main);">-</p>
         </div>
 
         <div class="share-action-grid">
@@ -494,8 +501,8 @@
       } else {
         video.classList.remove("mirrored");
       }
-      statusMsg.innerText = useFrontCamera ? "🔄 전면 카메라로 전환 중..." : "🔄 후면 카메라로 전환 중...";
-      aiStatusBadge.innerText = "🔄 카메라 전환 중...";
+      statusMsg.innerText = useFrontCamera ? "🔄 전면 카메라 전환 중..." : "🔄 후면 카메라 전환 중...";
+      aiStatusBadge.innerText = "🔄 전환 중...";
       startCamera();
     }
 
@@ -531,13 +538,13 @@
 
       if (validPalmDetected) {
         lastHandLandmarks = results.multiHandLandmarks[0];
-        aiStatusBadge.innerText = "🟢 AI 손바닥 완벽 감지됨";
-        statusMsg.innerText = "✨ 손바닥 크기 및 각도 분석 완료! 'AI 손금 자동 정밀 스캔'을 누르세요.";
+        aiStatusBadge.innerText = "🟢 손바닥 감지됨";
+        statusMsg.innerText = "✨ 감지 완료! 'AI 손금 자동 정밀 스캔'을 누르세요.";
         drawAIPerfectPalmLines(ctx, lastHandLandmarks, w, h, 0.6);
       } else {
         lastHandLandmarks = null;
-        aiStatusBadge.innerText = "🔍 손바닥 찾는 중...";
-        statusMsg.innerText = "💡 손바닥 안쪽이 보이도록 프레임 중앙에 꽉 차게 비춰주세요.";
+        aiStatusBadge.innerText = "🔍 찾는 중...";
+        statusMsg.innerText = "💡 손바닥 안쪽이 보이도록 프레임 중앙에 비춰주세요.";
       }
       ctx.restore();
     }
@@ -554,7 +561,7 @@
             video.style.display = "none";
             snapshotImg.style.display = "none";
             palmGuideFrame.style.display = "none";
-            statusMsg.innerText = "🔄 업로드된 사진에서 AI 비전 모델 정밀 분석 중...";
+            statusMsg.innerText = "🔄 업로드된 사진 분석 중...";
 
             const staticHands = new Hands({
               locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
@@ -573,10 +580,10 @@
 
               if (res.multiHandLandmarks && res.multiHandLandmarks.length > 0) {
                 lastHandLandmarks = res.multiHandLandmarks[0];
-                statusMsg.innerText = "✅ AI 곡선 피팅 완료! 스캔 버튼을 누르세요.";
+                statusMsg.innerText = "✅ 곡선 피팅 완료! 스캔 버튼을 누르세요.";
                 drawAIPerfectPalmLines(ctx, lastHandLandmarks, w, h, 0.9);
               } else {
-                statusMsg.innerText = "⚠️ 손을 찾지 못했습니다. 사진을 업로드한 상태로 스캔 버튼을 눌러주세요.";
+                statusMsg.innerText = "⚠️ 손을 찾지 못했습니다. 스캔 버튼을 눌러 진행해주세요.";
               }
             });
             await staticHands.send({ image: img });
@@ -592,18 +599,16 @@
 
       const wrist = landmarks[0];
       const thumbCmc = landmarks[1];
-      const thumbMcp = landmarks[2];
       const indexMcp = landmarks[5];
       const middleMcp = landmarks[9];
-      const ringMcp = landmarks[13];
       const pinkyMcp = landmarks[17];
 
       const wx = wrist.x * w;
       const wy = wrist.y * h;
       const tcx = thumbCmc.x * w;
       const tcy = thumbCmc.y * h;
-      const tmx = thumbMcp.x * w;
-      const tmy = thumbMcp.y * h;
+      const tmx = landmarks[2].x * w;
+      const tmy = landmarks[2].y * h;
       const imx = indexMcp.x * w;
       const imy = indexMcp.y * h;
       const mmx = middleMcp.x * w;
@@ -658,19 +663,6 @@
       );
       ctx.stroke();
 
-      // 관절 포인트
-      landmarks.forEach((pt, index) => {
-        const px = pt.x * w;
-        const py = pt.y * h;
-        ctx.fillStyle = index === 0 ? '#ef4444' : '#38bdf8';
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(px, py, 4, 0, 2 * Math.PI);
-        ctx.fill();
-        ctx.stroke();
-      });
-
       ctx.restore();
     }
 
@@ -699,14 +691,14 @@
         
         const snapshotDataUrl = canvas.toDataURL("image/png");
         snapshotImg.src = snapshotDataUrl;
-        snapshotImg.style.display = "block";
+        snapshotImg.style.display = "block"; // 스냅샷 이미지 유지 처리
         video.style.display = "none";
         targetSource = snapshotImg;
       }
 
       palmGuideFrame.style.display = "none";
       scanOverlay.classList.add("active");
-      statusMsg.innerText = "🤖 AI 딥러닝 비전 모델이 손금 곡선을 완벽하게 피팅 중...";
+      statusMsg.innerText = "🤖 AI 비전 모델이 손금 곡선을 피팅 중...";
 
       setTimeout(() => {
         scanOverlay.classList.remove("active");
@@ -718,7 +710,6 @@
         ctx.clearRect(0, 0, w, h);
 
         if (!lastHandLandmarks) {
-          // 감지된 랜드마크가 없을 경우 기본 중앙 기준 가상 랜드마크 부여하여 시각화 유지
           lastHandLandmarks = [
             {x:0.5, y:0.8},{x:0.4, y:0.7},{x:0.35, y:0.6},{x:0.3, y:0.5},{x:0.25, y:0.4},
             {x:0.4, y:0.35},{x:0.38, y:0.25},{x:0.36, y:0.18},{x:0.35, y:0.12},
@@ -731,8 +722,8 @@
         drawAIPerfectPalmLines(ctx, lastHandLandmarks, w, h, 1.0);
         generateDetailedReport();
         
-        statusMsg.innerText = "✨ AI 비전 모델 기반 완자동 손금 정밀 분석이 완료되었습니다!";
-        aiStatusBadge.innerText = "✅ AI 분석 완료";
+        statusMsg.innerText = "✨ AI 손금 정밀 분석이 완료되었습니다!";
+        aiStatusBadge.innerText = "✅ 분석 완료";
 
         btnResetScan.style.display = "block";
         btnGroupAction.style.display = "none";
@@ -753,7 +744,7 @@
       btnGroupAction.style.display = "flex";
       
       statusMsg.innerText = "💡 손바닥 안쪽이 보이도록 비춰주세요...";
-      aiStatusBadge.innerText = "🟢 AI 비전 엔진 대기 중";
+      aiStatusBadge.innerText = "🟢 AI 대기 중";
       startCamera();
     }
 
@@ -762,46 +753,46 @@
       detailsDiv.innerHTML = `
         <div class="detail-section" style="border-left: 6px solid #f59e0b;">
           <div class="detail-header">
-            <h4 style="color: #b45309;">❤️ 생명선 (Life Line) 분석</h4>
-            <span style="font-size: 0.98rem; font-weight: bold; color: #f59e0b;">95점 (최상급)</span>
+            <h4 style="color: #b45309;">❤️ 생명선 분석</h4>
+            <span style="font-size: 0.9rem; font-weight: bold; color: #f59e0b;">95점</span>
           </div>
-          <div class="shape-desc" style="color: #d97706;">📐 AI 비전 곡선 피팅: 엄지 두덩이 아치형 정밀 연산</div>
-          <div class="original-data">💡 타고난 체력적 활력과 면역력이 매우 탄탄하며, 복잡한 프로젝트나 장기 레이스에서도 쉽게 지치지 않는 회복 탄력성을 지니고 있습니다.</div>
+          <div class="shape-desc" style="color: #d97706;">📐 엄지 두덩이 아치형 정밀 연산</div>
+          <div class="original-data">💡 타고난 체력적 활력과 면역력이 탄탄하며, 장기 레이스에서도 쉽게 지치지 않는 회복 탄력성을 지니고 있습니다.</div>
           <div class="analysis-grid">
-            <div class="good-box"><strong>🟢 강점 및 성과</strong>지속적인 몰입이 요구되는 주요 마일스톤이나 고난도 업무를 안정적으로 완수하는 강한 체력을 발휘합니다.</div>
-            <div class="bad-box"><strong>🔴 주의할 점</strong>높은 체력과 열정으로 과로하기 쉬우니 체계적인 컨디션 관리가 병행되어야 합니다.</div>
+            <div class="good-box"><strong>🟢 강점</strong>지속적인 몰입이 요구되는 주요 업무를 안정적으로 완수합니다.</div>
+            <div class="bad-box"><strong>🔴 주의</strong>지나친 열정으로 인한 과로를 주의하세요.</div>
           </div>
         </div>
 
         <div class="detail-section" style="border-left: 6px solid #3b82f6;">
           <div class="detail-header">
-            <h4 style="color: #1d4ed8;">💡 두뇌선 (Head Line) 분석</h4>
-            <span style="font-size: 0.98rem; font-weight: bold; color: #3b82f6;">92점 (우수함)</span>
+            <h4 style="color: #1d4ed8;">💡 두뇌선 분석</h4>
+            <span style="font-size: 0.9rem; font-weight: bold; color: #3b82f6;">92점</span>
           </div>
-          <div class="shape-desc" style="color: #2563eb;">📐 AI 비전 곡선 피팅: 손바닥 중심 수평 흐름 정밀 연산</div>
-          <div class="original-data">💡 직관적인 판단력과 구조적인 분석 능력이 뛰어납니다. 복잡하게 얽힌 문제의 본질을 빠르게 파악하고 명쾌한 대안을 도출해 냅니다.</div>
+          <div class="shape-desc" style="color: #2563eb;">📐 손바닥 중심 수평 흐름 정밀 연산</div>
+          <div class="original-data">💡 직관적인 판단력과 구조적인 분석 능력이 뛰어납니다. 복잡한 문제의 본질을 빠르게 파악합니다.</div>
           <div class="analysis-grid">
-            <div class="good-box"><strong>🟢 강점 및 성과</strong>전략 수립, 프로세스 기획, 데이터 기반 의사결정에서 탁월한 브레인 역할을 수행합니다.</div>
-            <div class="bad-box"><strong>🔴 주의할 점</strong>때로는 완벽을 추구하느라 의사결정 과정에서 깊은 고민으로 에너지를 소모할 수 있습니다.</div>
+            <div class="good-box"><strong>🟢 강점</strong>전략 수립 및 데이터 기반 의사결정에서 탁월합니다.</div>
+            <div class="bad-box"><strong>🔴 주의</strong>완벽을 추구하느라 깊은 고민으로 에너지를 소모할 수 있습니다.</div>
           </div>
         </div>
 
         <div class="detail-section" style="border-left: 6px solid #10b981;">
           <div class="detail-header">
-            <h4 style="color: #047857;">💰 운명선 (Fate Line) 분석</h4>
-            <span style="font-size: 0.98rem; font-weight: bold; color: #10b981;">94점 (대성할 상)</span>
+            <h4 style="color: #047857;">💰 운명선 분석</h4>
+            <span style="font-size: 0.9rem; font-weight: bold; color: #10b981;">94점</span>
           </div>
-          <div class="shape-desc" style="color: #059669;">📐 AI 비전 곡선 피팅: 손목-중지 수직 중심축 정밀 연산</div>
-          <div class="original-data">💡 목표 지향적인 성취 에너지가 매우 강합니다. 본인이 쏟아붓는 노력과 커리어 궤적에 비례하여 확실한 성과와 보상이 뒤따르는 대운의 흐름입니다.</div>
+          <div class="shape-desc" style="color: #059669;">📐 손목-중지 수직 중심축 정밀 연산</div>
+          <div class="original-data">💡 목표 지향적인 성취 에너지가 강합니다. 노력과 커리어 궤적에 비례하여 확실한 성과가 뒤따릅니다.</div>
           <div class="analysis-grid">
-            <div class="good-box"><strong>🟢 강점 및 성과</strong>주도적으로 커리어를 이끌어가며 조직과 프로젝트의 핵심적인 결실과 명예를 거머쥐게 됩니다.</div>
-            <div class="bad-box"><strong>🔴 주의할 점</strong>주변 동료 및 팀원들과의 유연한 소통과 조율을 더한다면 성과가 더욱 극대화됩니다.</div>
+            <div class="good-box"><strong>🟢 강점</strong>주도적으로 커리어를 이끌어 가며 핵심 결실을 거둡니다.</div>
+            <div class="bad-box"><strong>🔴 주의</strong>동료들과의 유연한 소통을 더하면 성과가 극대화됩니다.</div>
           </div>
         </div>
       `;
 
       document.getElementById("desc-summary").innerText = 
-        "AI 비전 딥러닝 모델이 손바닥의 해부학적 관절 포인트를 바탕으로 최적의 곡선을 자동 피팅한 결과입니다. 견고한 세 주요 선의 흐름을 통해 타고난 통찰력과 추진력으로 큰 결실을 맺으실 것입니다.";
+        "AI 비전 모델이 손바닥 관절 포인트를 바탕으로 곡선을 피팅한 결과입니다. 견고한 세 주요 선의 흐름을 통해 통찰력과 추진력으로 큰 결실을 맺으실 것입니다.";
 
       resultCard.style.display = "block";
     }
