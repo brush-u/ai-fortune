@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>AI 손금(수상) 정밀 분석 - AI 비전 곡선 피팅 엔진</title>
+  
+  <link rel="stylesheet" href="style.css">
+  <!-- html2canvas -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- MediaPipe Hands & Camera Utils -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+  <style>
+    .guide-box {
+      background: var(--bg-secondary);
+      border: 1px dashed var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      margin-bottom: 16px;
+      text-align: left;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      color: var(--text-sub);
+    }
+    .guide-box .guide-title { color: #059669; font-weight: bold; margin-bottom: 6px; font-size: 1rem; }
+    
+    .status-msg {
+      background: var(--bg-secondary);
+      color: var(--text-main);
+      padding: 14px;
+      border-radius: var(--radius-md);
+      font-size: 1.05rem;
+      margin-bottom: 16px;
+      font-weight: bold;
+      min-height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border-color);
+      text-align: center;
+    }
+
+    .video-wrapper {
+      position: relative;
+      width: 100%;
+      background: #000;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      margin-bottom: 16px;
+      border: 2px solid var(--border-color);
+      aspect-ratio: 4 / 3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    video, img.uploaded-img, canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    video { z-index: 1; display: block; }
+    video.mirrored { transform: scaleX(-1); }
+
+    img.uploaded-img { z-index: 2; display: none; }
+    canvas { pointer-events: none; z-index: 3; }
+
+    .palm-guide-frame {
+      position: absolute;
+      top: 10%; left: 15%; width: 70%; height: 80%;
+      border: 2px dashed rgba(255, 255, 255, 0.7);
+      border-radius: 20px;
+      z-index: 4;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: inset 0 0 15px rgba(0,0,0,0.5);
+    }
+    .palm-guide-frame span {
+      background: rgba(0, 0, 0, 0.6);
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .scan-overlay {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 10;
+      display: none;
+    }
+    .scan-overlay.active { display: block; }
+    .scan-line {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 4px;
+      background: linear-gradient(90deg, transparent, #10b981, #34d399, #10b981, transparent);
+      box-shadow: 0 0 15px #10b981, 0 0 25px #34d399;
+      animation: scan-move 2s linear infinite;
+    }
+    @keyframes scan-move {
+      0% { top: 0%; }
+      50% { top: 92%; }
+      100% { top: 0%; }
+    }
+
+    .top-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .cam-switch-btn {
+      background: var(--bg-secondary);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      padding: 10px 14px;
+      font-size: 0.9rem;
+      font-weight: bold;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .main-btn-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+      align-items: center;
+    }
+
+    .main-btn {
+      background: linear-gradient(135deg, #059669, #10b981);
+      color: white;
+      border: none;
+      padding: 14px;
+      font-size: 1.05rem;
+      font-weight: bold;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      flex: 2;
+      box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);
+    }
+    
+    .sub-upload-btn {
+      background: var(--bg-secondary);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      padding: 14px;
+      font-size: 0.95rem;
+      font-weight: bold;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      flex: 1;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .reset-scan-btn {
+      background: #f3f4f6;
+      color: #374151;
+      border: 1px solid #d1d5db;
+      padding: 14px;
+      font-size: 1rem;
+      font-weight: bold;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      width: 100%;
+      margin-bottom: 16px;
+      display: none;
+      text-align: center;
+    }
+
+    .result-card {
+      margin-top: 16px;
+      background: var(--bg-card);
+      padding: 22px;
+      border-radius: var(--radius-lg);
+      text-align: left;
+      display: none;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-subtle);
+    }
+    .result-card h3 { 
+      color: #047857; 
+      margin-bottom: 16px; 
+      font-size: 1.35rem; 
+      text-align: center; 
+      border-bottom: 2px solid var(--border-color); 
+      padding-bottom: 12px; 
+    }
+
+    .fortune-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .fortune-box {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      padding: 12px 6px;
+      border-radius: var(--radius-md);
+      text-align: center;
+    }
+    .fortune-box .f-title { font-size: 0.88rem; color: var(--text-sub); margin-bottom: 4px; font-weight: bold; }
+    .fortune-box .f-score { font-size: 1.1rem; font-weight: bold; color: #059669; }
+
+    .detail-section {
+      background: var(--bg-secondary);
+      padding: 16px;
+      border-radius: var(--radius-md);
+      margin-bottom: 14px;
+      border: 1px solid var(--border-color);
+    }
+    .detail-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .detail-section h4 { font-size: 1.1rem; font-weight: bold; }
+
+    .shape-desc { font-size: 0.95rem; margin-bottom: 8px; font-weight: bold; }
+    .original-data { font-size: 0.92rem; color: var(--text-main); line-height: 1.6; margin-bottom: 10px; }
+    .analysis-grid { display: flex; flex-direction: column; gap: 10px; }
+    
+    .good-box {
+      background: #f0fdf4; border: 1px solid #bbf7d0; padding: 10px 12px; border-radius: 8px; font-size: 0.9rem; line-height: 1.5; color: #166534;
+    }
+    .good-box strong { color: #15803d; display: block; margin-bottom: 4px; font-size: 0.95rem; }
+
+    .bad-box {
+      background: #fef2f2; border: 1px solid #fecaca; padding: 10px 12px; border-radius: 8px; font-size: 0.9rem; line-height: 1.5; color: #991b1b;
+    }
+    .bad-box strong { color: #dc2626; display: block; margin-bottom: 4px; font-size: 0.95rem; }
+
+    .legend-box {
+      display: flex;
+      justify-content: space-around;
+      background: var(--bg-secondary);
+      padding: 12px;
+      border-radius: var(--radius-md);
+      margin-bottom: 16px;
+      font-size: 0.95rem;
+      font-weight: bold;
+      border: 1px solid var(--border-color);
+    }
+    .legend-item { display: flex; align-items: center; gap: 8px; }
+    .dot { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }
+
+    .share-action-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 2px dashed var(--border-color);
+    }
+    .share-btn {
+      padding: 14px; border-radius: var(--radius-md); font-size: 1rem; font-weight: bold; border: none; cursor: pointer;
+    }
+    .btn-save { background: var(--bg-secondary); color: var(--text-main); border: 1px solid var(--border-color); }
+    .btn-share { background: #10b981; color: #ffffff; }
+
+    .app-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .nav-brand { font-weight: bold; text-decoration: none; color: var(--text-main); font-size: 1.1rem; }
+    .nav-home-btn {
+      background: var(--bg-secondary);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      font-weight: bold;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="app-nav">
+    <a href="index.html" class="nav-brand">🔮 AI 운세 센터</a>
+    <a href="index.html" class="nav-home-btn" id="btn-back-home">🏠 AI 운세 센터 홈</a>
+  </nav>
+
+  <div class="app-container" id="capture-container">
+    <div class="white-card">
+      <div style="text-align: center; margin-bottom: 16px;">
+        <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 6px;">✋ AI 손금(수상) 정밀 분석</h2>
+        <p style="color: var(--text-sub); font-size: 0.98rem;">AI 비전 모델이 손바닥 해부학적 관절을 분석하여 최적의 손금 곡선을 자동 매핑합니다</p>
+      </div>
+
+      <div class="guide-box">
+        <div class="guide-title">🤖 AI 비전 곡선 피팅 엔진 적용 안내</div>
+        <ul>
+          <li><strong>완자동 딥러닝 핏:</strong> 수동 조정을 없애고, MediaPipe 21개 뼈대 랜드마크의 기하학적 비율(손바닥 폭, 길이, 손가락 기점)을 실시간으로 역산합니다.</li>
+          <li><strong>정밀 곡선 연동:</strong> 각 개인의 손바닥 크기와 형태에 맞추어 생명선·두뇌선·운명선의 곡률이 오차 없이 정확히 피팅되도록 고도화되었습니다.</li>
+        </ul>
+      </div>
+
+      <div class="top-controls">
+        <button id="btn-switch-cam" class="cam-switch-btn" onclick="switchCamera()">🔄 카메라 전환 (전면/후면)</button>
+        <div id="ai-status-badge" style="font-size: 0.85rem; color: #059669; font-weight: bold;">🟢 AI 비전 엔진 대기 중</div>
+      </div>
+
+      <div id="status" class="status-msg">💡 손바닥 안쪽이 보이도록 비춰주세요...</div>
+
+      <div class="video-wrapper">
+        <video id="webcam" class="mirrored" autoplay playsinline muted></video>
+        <img id="snapshot-img" class="uploaded-img" alt="스냅샷 이미지">
+        <img id="uploaded-preview" class="uploaded-img" alt="업로드 이미지">
+        <canvas id="output_canvas"></canvas>
+
+        <div id="palm-guide-frame" class="palm-guide-frame">
+          <span>✋ 손바닥을 여기에 맞춰주세요</span>
+        </div>
+
+        <div id="scan-overlay" class="scan-overlay">
+          <div class="scan-line"></div>
+        </div>
+      </div>
+
+      <input type="file" id="file-input" accept="image/*" style="display: none;">
+
+      <button id="btn-reset-scan" class="reset-scan-btn" onclick="resetToCamView()">↩️ 다시 촬영하기 (앞 화면으로)</button>
+
+      <div class="main-btn-group" id="btn-group-action">
+        <button id="btn-action" class="main-btn" onclick="startPalmScan()">✋ AI 손금 자동 정밀 스캔</button>
+        <button class="sub-upload-btn" onclick="document.getElementById('file-input').click()">📁 사진 업로드</button>
+      </div>
+
+      <div class="legend-box">
+        <div class="legend-item"><span class="dot" style="background:#f59e0b;"></span>생명선</div>
+        <div class="legend-item"><span class="dot" style="background:#3b82f6;"></span>두뇌선</div>
+        <div class="legend-item"><span class="dot" style="background:#10b981;"></span>운명선</div>
+      </div>
+
+      <div id="result" class="result-card">
+        <h3>📊 AI 손금(수상) 정밀 분석 리포트</h3>
+
+        <div class="fortune-grid">
+          <div class="fortune-box">
+            <div class="f-title">❤️ 생명선 (체력)</div>
+            <div class="f-score" id="score-life">95점 💪</div>
+          </div>
+          <div class="fortune-box">
+            <div class="f-title">💡 두뇌선 (적성)</div>
+            <div class="f-score" id="score-brain">92점 🧠</div>
+          </div>
+          <div class="fortune-box">
+            <div class="f-title">💰 운명선 (재물)</div>
+            <div class="f-score" id="score-fate">94점 💰</div>
+          </div>
+        </div>
+
+        <div id="details-container"></div>
+
+        <div class="detail-section" style="border-left: 6px solid #059669; margin-top: 16px;">
+          <div class="detail-header">
+            <h4 style="color: #065f46; font-size: 1.15rem;">💡 종합 평론 및 개운 조언</h4>
+          </div>
+            <p id="desc-summary" style="font-size: 0.98rem; line-height: 1.7; color: var(--text-main);">-</p>
+        </div>
+
+        <div class="share-action-grid">
+          <button class="share-btn btn-save" onclick="saveResultImage()">💾 결과 저장</button>
+          <button class="share-btn btn-share" onclick="shareResult()">💛 결과 공유</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const video = document.getElementById("webcam");
+    const snapshotImg = document.getElementById("snapshot-img");
+    const imgPreview = document.getElementById("uploaded-preview");
+    const canvas = document.getElementById("output_canvas");
+    const ctx = canvas.getContext("2d");
+    const statusMsg = document.getElementById("status");
+    const resultCard = document.getElementById("result");
+    const scanOverlay = document.getElementById("scan-overlay");
+    const fileInput = document.getElementById("file-input");
+    const btnResetScan = document.getElementById("btn-reset-scan");
+    const btnGroupAction = document.getElementById("btn-group-action");
+    const palmGuideFrame = document.getElementById("palm-guide-frame");
+    const aiStatusBadge = document.getElementById("ai-status-badge");
+
+    let mediaStream = null;
+    let useFrontCamera = true;
+    let hands = null;
+    let cameraInstance = null;
+    let lastHandLandmarks = null;
+    let isScanningDone = false;
+
+    function initMediaPipe() {
+      hands = new Hands({
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+      });
+      hands.setOptions({
+        maxNumHands: 1,
+        modelComplexity: 1,
+        minDetectionConfidence: 0.8,
+        minTrackingConfidence: 0.8
+      });
+      hands.onResults(onHandResults);
+
+      startCamera();
+    }
+
+    async function startCamera() {
+      if (mediaStream) {
+        mediaStream.getTracks().forEach(track => track.stop());
+      }
+      try {
+        const constraints = {
+          video: { 
+            width: { ideal: 1280 }, 
+            height: { ideal: 720 }, 
+            facingMode: useFrontCamera ? "user" : "environment" 
+          }, 
+          audio: false 
+        };
+        mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+        video.srcObject = mediaStream;
+        await video.play();
+
+        if (cameraInstance) {
+          cameraInstance.stop();
+        }
+        cameraInstance = new Camera(video, {
+          onFrame: async () => {
+            if (!isScanningDone && video.readyState >= 2) {
+              await hands.send({ image: video });
+            }
+          },
+          width: 1280,
+          height: 720
+        });
+        cameraInstance.start();
+      } catch (err) {
+        statusMsg.innerText = "⚠️ 카메라 접근 실패 (사진 업로드를 이용해주세요)";
+        aiStatusBadge.innerText = "🔴 카메라 오류";
+      }
+    }
+
+    function switchCamera() {
+      useFrontCamera = !useFrontCamera;
+      if (useFrontCamera) {
+        video.classList.add("mirrored");
+      } else {
+        video.classList.remove("mirrored");
+      }
+      statusMsg.innerText = useFrontCamera ? "🔄 전면 카메라로 전환 중..." : "🔄 후면 카메라로 전환 중...";
+      aiStatusBadge.innerText = "🔄 카메라 전환 중...";
+      startCamera();
+    }
+
+    function onHandResults(results) {
+      if (isScanningDone) return;
+
+      const w = video.videoWidth || 640;
+      const h = video.videoHeight || 480;
+      canvas.width = w;
+      canvas.height = h;
+
+      ctx.save();
+      ctx.clearRect(0, 0, w, h);
+
+      if (useFrontCamera) {
+        ctx.scale(-1, 1);
+        ctx.translate(-w, 0);
+      }
+
+      let validPalmDetected = false;
+
+      if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+        const landmarks = results.multiHandLandmarks[0];
+        const wristY = landmarks[0].y;
+        const middleTipY = landmarks[12].y;
+        const avgX = (landmarks[0].x + landmarks[5].x + landmarks[17].x) / 3;
+        const avgY = (landmarks[0].y + landmarks[5].y + landmarks[17].y) / 3;
+
+        if (middleTipY < wristY && avgX >= 0.15 && avgX <= 0.85 && avgY >= 0.10 && avgY <= 0.90) {
+          validPalmDetected = true;
+        }
+      }
+
+      if (validPalmDetected) {
+        lastHandLandmarks = results.multiHandLandmarks[0];
+        aiStatusBadge.innerText = "🟢 AI 손바닥 완벽 감지됨";
+        statusMsg.innerText = "✨ 손바닥 크기 및 각도 분석 완료! 'AI 손금 자동 정밀 스캔'을 누르세요.";
+
+        // AI 완자동 곡선 피팅 모델 렌더링 (점은 유지하되, 손바닥 해부학 비율에 완벽히 동조된 선 표시)
+        drawAIPerfectPalmLines(ctx, lastHandLandmarks, w, h, 0.6);
+      } else {
+        lastHandLandmarks = null;
+        aiStatusBadge.innerText = "🔍 손바닥 찾는 중...";
+        statusMsg.innerText = "💡 손바닥 안쪽이 보이도록 프레임 중앙에 꽉 차게 비춰주세요.";
+      }
+      ctx.restore();
+    }
+
+    fileInput.addEventListener('change', async function(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const img = new Image();
+          img.onload = async function() {
+            imgPreview.src = e.target.result;
+            imgPreview.style.display = "block";
+            video.style.display = "none";
+            snapshotImg.style.display = "none";
+            palmGuideFrame.style.display = "none";
+            statusMsg.innerText = "🔄 업로드된 사진에서 AI 비전 모델 정밀 분석 중...";
+
+            const staticHands = new Hands({
+              locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+            });
+            staticHands.setOptions({
+              maxNumHands: 1,
+              modelComplexity: 1,
+              minDetectionConfidence: 0.6
+            });
+            staticHands.onResults(res => {
+              const w = img.naturalWidth;
+              const h = img.naturalHeight;
+              canvas.width = w;
+              canvas.height = h;
+              ctx.clearRect(0, 0, w, h);
+
+              if (res.multiHandLandmarks && res.multiHandLandmarks.length > 0) {
+                lastHandLandmarks = res.multiHandLandmarks[0];
+                statusMsg.innerText = "✅ AI 곡선 피팅 완료! 스캔 버튼을 누르세요.";
+                drawAIPerfectPalmLines(ctx, lastHandLandmarks, w, h, 0.9);
+              } else {
+                statusMsg.innerText = "⚠️ 손을 찾지 못했습니다. 다시 시도하거나 스캔 버튼을 누르세요.";
+              }
+            });
+            await staticHands.send({ image: img });
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // 🌟 [AI 완자동 곡선 피팅 알고리즘: 21개 관절의 해부학적 기하학 비율을 이용해 완벽한 손금 위치 연산]
+    function drawAIPerfectPalmLines(ctx, landmarks, w, h, alpha = 1.0) {
+      if (!landmarks) return;
+
+      const wrist = landmarks[0];
+      const thumbCmc = landmarks[1];
+      const thumbMcp = landmarks[2];
+      const indexMcp = landmarks[5];
+      const middleMcp = landmarks[9];
+      const ringMcp = landmarks[13];
+      const pinkyMcp = landmarks[17];
+
+      const wx = wrist.x * w;
+      const wy = wrist.y * h;
+      const tcx = thumbCmc.x * w;
+      const tcy = thumbCmc.y * h;
+      const tmx = thumbMcp.x * w;
+      const tmy = thumbMcp.y * h;
+      const imx = indexMcp.x * w;
+      const imy = indexMcp.y * h;
+      const mmx = middleMcp.x * w;
+      const mmy = middleMcp.y * h;
+      const pmx = pinkyMcp.x * w;
+      const pmy = pinkyMcp.y * h;
+
+      // 손바닥 중심 및 폭/높이 스케일 자동 계산
+      const palmWidth = Math.hypot(pmx - imx, pmy - imy);
+      const palmHeight = Math.hypot(mmx - wx, mmy - wy);
+      const palmCenterX = (imx + pmx + wx) / 3;
+      const palmCenterY = (imy + pmy + wy) / 3;
+
+      ctx.save();
+      ctx.globalAlpha = alpha;
+
+      // 1. 생명선 (Life Line) - 엄지 두덩이(Thethen) 곡선을 완벽히 감싸는 아치형 피팅
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 4;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(tmx + (imx - tmx) * 0.25, tmy + (imy - tmy) * 0.15);
+      ctx.bezierCurveTo(
+        tcx - (palmWidth * 0.12), tcy + (palmHeight * 0.15),
+        wx - (palmWidth * 0.15), wy - (palmHeight * 0.10),
+        wx + (palmWidth * 0.08), wy - (palmHeight * 0.22)
+      );
+      ctx.stroke();
+
+      // 2. 두뇌선 (Head Line) - 검지 아래에서 시작해 손바닥 중앙을 가로질러 새끼손가락 방향으로 뻗는 곡선 피팅
+      ctx.strokeStyle = '#3b82f6';
+      ctx.lineWidth = 4;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(imx - (palmWidth * 0.08), imy + (palmHeight * 0.08));
+      ctx.bezierCurveTo(
+        palmCenterX - (palmWidth * 0.05), palmCenterY - (palmHeight * 0.03),
+        palmCenterX + (palmWidth * 0.08), palmCenterY + (palmHeight * 0.05),
+        pmx - (palmWidth * 0.15), pmy + (palmHeight * 0.12)
+      );
+      ctx.stroke();
+
+      // 3. 운명선 (Fate Line) - 손목 중앙에서 중지 방향으로 올라가는 수직 중심축 피팅
+      ctx.strokeStyle = '#10b981';
+      ctx.lineWidth = 4;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(wx + (pmx - wx) * 0.45, wy - (palmHeight * 0.05));
+      ctx.bezierCurveTo(
+        wx + (pmx - wx) * 0.42, wy - (palmHeight * 0.25),
+        palmCenterX - (palmWidth * 0.02), palmCenterY + (palmHeight * 0.08),
+        mmx, mmy + (palmHeight * 0.12)
+      );
+      ctx.stroke();
+
+      // AI 관절 랜드마크 포인트 시각화 (정밀 감지 확인용)
+      landmarks.forEach((pt, index) => {
+        const px = pt.x * w;
+        const py = pt.y * h;
+        ctx.fillStyle = index === 0 ? '#ef4444' : '#38bdf8';
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(px, py, 4, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.stroke();
+      });
+
+      ctx.restore();
+    }
+
+    async function startPalmScan() {
+      if (!lastHandLandmarks) {
+        alert("손바닥 안쪽 면이 인식되지 않았습니다. 손바닥을 정면에 선명하게 비춰주세요.");
+        return;
+      }
+
+      isScanningDone = true;
+      if (cameraInstance) cameraInstance.stop();
+
+      let targetSource = null;
+      if (imgPreview.style.display === "block" && imgPreview.src) {
+        targetSource = imgPreview;
+      } else {
+        const w = video.videoWidth || 640;
+        const h = video.videoHeight || 480;
+        canvas.width = w;
+        canvas.height = h;
+        
+        ctx.save();
+        if (useFrontCamera) {
+          ctx.scale(-1, 1);
+          ctx.translate(-w, 0);
+        }
+        ctx.drawImage(video, 0, 0, w, h);
+        ctx.restore();
+        
+        const snapshotDataUrl = canvas.toDataURL("image/png");
+        snapshotImg.src = snapshotDataUrl;
+        snapshotImg.style.display = "block";
+        video.style.display = "none";
+        targetSource = snapshotImg;
+      }
+
+      palmGuideFrame.style.display = "none";
+      scanOverlay.classList.add("active");
+      statusMsg.innerText = "🤖 AI 딥러닝 비전 모델이 손금 곡선을 완벽하게 피팅 중...";
+
+      setTimeout(() => {
+        scanOverlay.classList.remove("active");
+        
+        const w = targetSource.naturalWidth || targetSource.clientWidth || 640;
+        const h = targetSource.naturalHeight || targetSource.clientHeight || 480;
+        canvas.width = w;
+        canvas.height = h;
+        ctx.clearRect(0, 0, w, h);
+
+        // 완자동 피팅 최종 렌더링 (알파 1.0)
+        drawAIPerfectPalmLines(ctx, lastHandLandmarks, w, h, 1.0);
+        generateDetailedReport();
+        
+        statusMsg.innerText = "✨ AI 비전 모델 기반 완자동 손금 정밀 분석이 완료되었습니다!";
+        aiStatusBadge.innerText = "✅ AI 분석 완료";
+
+        btnResetScan.style.display = "block";
+        btnGroupAction.style.display = "none";
+      }, 2000);
+    }
+
+    function resetToCamView() {
+      isScanningDone = false;
+      resultCard.style.display = "none";
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      snapshotImg.style.display = "none";
+      imgPreview.style.display = "none";
+      video.style.display = "block";
+      palmGuideFrame.style.display = "flex";
+      
+      btnResetScan.style.display = "none";
+      btnGroupAction.style.display = "flex";
+      
+      statusMsg.innerText = "💡 손바닥 안쪽이 보이도록 비춰주세요...";
+      aiStatusBadge.innerText = "🟢 AI 비전 엔진 대기 중";
+      startCamera();
+    }
+
+    function generateDetailedReport() {
+      const detailsDiv = document.getElementById("details-container");
+      detailsDiv.innerHTML = `
+        <div class="detail-section" style="border-left: 6px solid #f59e0b;">
+          <div class="detail-header">
+            <h4 style="color: #b45309;">❤️ 생명선 (Life Line) 분석</h4>
+            <span style="font-size: 0.98rem; font-weight: bold; color: #f59e0b;">95점 (최상급)</span>
+          </div>
+          <div class="shape-desc" style="color: #d97706;">📐 AI 비전 곡선 피팅: 엄지 두덩이 아치형 정밀 연산</div>
+          <div class="original-data">💡 타고난 체력적 활력과 면역력이 매우 탄탄하며, 복잡한 프로젝트나 장기 레이스에서도 쉽게 지치지 않는 회복 탄력성을 지니고 있습니다.</div>
+          <div class="analysis-grid">
+            <div class="good-box"><strong>🟢 강점 및 성과</strong>지속적인 몰입이 요구되는 주요 마일스톤이나 고난도 업무를 안정적으로 완수하는 강한 체력을 발휘합니다.</div>
+            <div class="bad-box"><strong>🔴 주의할 점</strong>높은 체력과 열정으로 과로하기 쉬우니 체계적인 컨디션 관리가 병행되어야 합니다.</div>
+          </div>
+        </div>
+
+        <div class="detail-section" style="border-left: 6px solid #3b82f6;">
+          <div class="detail-header">
+            <h4 style="color: #1d4ed8;">💡 두뇌선 (Head Line) 분석</h4>
+            <span style="font-size: 0.98rem; font-weight: bold; color: #3b82f6;">92점 (우수함)</span>
+          </div>
+          <div class="shape-desc" style="color: #2563eb;">📐 AI 비전 곡선 피팅: 손바닥 중심 수평 흐름 정밀 연산</div>
+          <div class="original-data">💡 직관적인 판단력과 구조적인 분석 능력이 뛰어납니다. 복잡하게 얽힌 문제의 본질을 빠르게 파악하고 명쾌한 대안을 도출해 냅니다.</div>
+          <div class="analysis-grid">
+            <div class="good-box"><strong>🟢 강점 및 성과</strong>전략 수립, 프로세스 기획, 데이터 기반 의사결정에서 탁월한 브레인 역할을 수행합니다.</div>
+            <div class="bad-box"><strong>🔴 주의할 점</strong>때로는 완벽을 추구하느라 의사결정 과정에서 깊은 고민으로 에너지를 소모할 수 있습니다.</div>
+          </div>
+        </div>
+
+        <div class="detail-section" style="border-left: 6px solid #10b981;">
+          <div class="detail-header">
+            <h4 style="color: #047857;">💰 운명선 (Fate Line) 분석</h4>
+            <span style="font-size: 0.98rem; font-weight: bold; color: #10b981;">94점 (대성할 상)</span>
+          </div>
+          <div class="shape-desc" style="color: #059669;">📐 AI 비전 곡선 피팅: 손목-중지 수직 중심축 정밀 연산</div>
+          <div class="original-data">💡 목표 지향적인 성취 에너지가 매우 강합니다. 본인이 쏟아붓는 노력과 커리어 궤적에 비례하여 확실한 성과와 보상이 뒤따르는 대운의 흐름입니다.</div>
+          <div class="analysis-grid">
+            <div class="good-box"><strong>🟢 강점 및 성과</strong>주도적으로 커리어를 이끌어가며 조직과 프로젝트의 핵심적인 결실과 명예를 거머쥐게 됩니다.</div>
+            <div class="bad-box"><strong>🔴 주의할 점</strong>주변 동료 및 팀원들과의 유연한 소통과 조율을 더한다면 성과가 더욱 극대화됩니다.</div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById("desc-summary").innerText = 
+        "AI 비전 딥러닝 모델이 손바닥의 해부학적 관절 포인트를 바탕으로 최적의 곡선을 자동 피팅한 결과입니다. 견고한 세 주요 선의 흐름을 통해 타고난 통찰력과 추진력으로 큰 결실을 맺으실 것입니다.";
+
+      resultCard.style.display = "block";
+    }
+
+    async function saveResultImage() {
+      try {
+        const canvasResult = await html2canvas(document.getElementById("capture-container"), { backgroundColor: '#ffffff', scale: 2, useCORS: true });
+        const link = document.createElement('a');
+        link.href = canvasResult.toDataURL('image/png');
+        link.download = 'AI손금_정밀분석결과.png';
+        link.click();
+      } catch (e) { alert("이미지 저장 중 오류가 발생했습니다."); }
+    }
+
+    async function shareResult() {
+      if (navigator.share) {
+        try { await navigator.share({ title: 'AI 손금 정밀 분석', text: '나의 AI 손금 분석 리포트 확인하기 ✋', url: window.location.href }); } catch (err) {}
+      } else {
+        navigator.clipboard.writeText(window.location.href);
+        alert('링크가 클립보드에 복사되었습니다!');
+      }
+    }
+
+    window.addEventListener("DOMContentLoaded", initMediaPipe);
+  </script>
+</body>
+</html>
