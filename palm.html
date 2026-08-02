@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>AI 손금(수상) 정밀 분석 - AI 비전 곡선 피팅 엔진</title>
   
-  <link rel="stylesheet" href="style.css">
+  <meta name="theme-color" content="#f1f5f9">
+  <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
+
   <!-- html2canvas -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <!-- MediaPipe Hands & Camera Utils -->
@@ -13,64 +15,100 @@
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 
   <style>
-    /* 모바일 화면 최적화: 여백 최소화 및 꽉 찬 화면 구성 */
-    body {
-      margin: 0;
-      padding: 0;
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    
+    html, body {
       width: 100%;
+      min-height: 100vh;
+      min-height: 100dvh;
+      background-color: #f1f5f9;
+      color: #1e293b;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       overflow-x: hidden;
-      background-color: var(--bg-main, #0f172a);
-    }
-    .app-container {
-      width: 100%;
-      max-width: 480px; /* 모바일 및 태블릿 최적 맥스 폭 설정 */
-      margin: 0 auto;
-      padding: 12px !important;
-      box-sizing: border-box;
-    }
-    .white-card {
-      width: 100%;
-      box-sizing: border-box;
     }
 
-    .guide-box {
-      background: var(--bg-secondary);
-      border: 1px dashed var(--border-color);
-      border-radius: var(--radius-md);
-      padding: 12px;
-      margin-bottom: 16px;
-      text-align: left;
-      font-size: 0.9rem;
-      line-height: 1.4;
-      color: var(--text-sub);
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: max(env(safe-area-inset-top), 6px) 6px max(env(safe-area-inset-bottom), 6px) 6px;
     }
-    .guide-box .guide-title { color: #059669; font-weight: bold; margin-bottom: 6px; font-size: 0.95rem; }
-    
-    .status-msg {
-      background: var(--bg-secondary);
-      color: var(--text-main);
+
+    .app-nav {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 8px;
+      margin-bottom: 2px;
+      font-size: 0.85rem;
+    }
+    .nav-brand { font-weight: bold; color: #4338ca; text-decoration: none; }
+    .nav-home-btn { color: #64748b; text-decoration: none; cursor: pointer; background: transparent; border: none; font-size: 0.85rem; }
+
+    .container {
+      background: #ffffff;
       padding: 12px;
-      border-radius: var(--radius-md);
-      font-size: 0.95rem;
-      margin-bottom: 14px;
-      font-weight: bold;
-      min-height: 44px;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+      margin: 0 auto;
+    }
+
+    .app-header {
       display: flex;
       align-items: center;
       justify-content: center;
-      border: 1px solid var(--border-color);
-      text-align: center;
+      gap: 6px;
+      margin-bottom: 2px;
+    }
+
+    h1 { font-size: 1.25rem; color: #4338ca; display: inline-block; }
+    p.desc { font-size: 0.8rem; color: #64748b; margin-bottom: 6px; }
+
+    .guide-box {
+      background: #f8fafc;
+      border: 1px dashed #cbd5e1;
+      border-radius: 8px;
+      padding: 6px 10px;
+      margin-bottom: 6px;
+      text-align: left;
+      font-size: 0.75rem;
+      line-height: 1.35;
+      color: #334155;
+    }
+    .guide-box .guide-title { color: #059669; font-weight: bold; margin-bottom: 2px; }
+    .guide-box ul { padding-left: 14px; }
+    
+    .status-msg {
+      background: #f1f5f9;
+      color: #334155;
+      padding: 6px 8px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      margin-bottom: 6px;
+      font-weight: bold;
+      min-height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1.3;
+      border: 1px solid #e2e8f0;
     }
 
     .video-wrapper {
       position: relative;
       width: 100%;
       background: #000;
-      border-radius: var(--radius-md);
+      border-radius: 10px;
       overflow: hidden;
-      margin-bottom: 14px;
-      border: 2px solid var(--border-color);
-      aspect-ratio: 3 / 4; /* 모바일 세로 화면 비율에 최적화 */
+      margin-bottom: 6px;
+      border: 2px solid #e2e8f0;
+      aspect-ratio: 3 / 4;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -139,27 +177,27 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 12px;
+      margin-bottom: 6px;
     }
 
     .cam-switch-btn {
-      background: var(--bg-secondary);
-      color: var(--text-main);
-      border: 1px solid var(--border-color);
-      padding: 8px 12px;
-      font-size: 0.85rem;
+      background: #f8fafc;
+      color: #334155;
+      border: 1px solid #e2e8f0;
+      padding: 6px 10px;
+      font-size: 0.78rem;
       font-weight: bold;
-      border-radius: var(--radius-md);
+      border-radius: 6px;
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
     }
 
     .main-btn-group {
       display: flex;
-      gap: 8px;
-      margin-bottom: 14px;
+      gap: 6px;
+      margin-bottom: 6px;
       align-items: center;
     }
 
@@ -167,23 +205,23 @@
       background: linear-gradient(135deg, #059669, #10b981);
       color: white;
       border: none;
-      padding: 12px;
-      font-size: 0.98rem;
+      padding: 11px;
+      font-size: 0.95rem;
       font-weight: bold;
-      border-radius: var(--radius-md);
+      border-radius: 8px;
       cursor: pointer;
       flex: 2;
       box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);
     }
     
     .sub-upload-btn {
-      background: var(--bg-secondary);
-      color: var(--text-main);
-      border: 1px solid var(--border-color);
-      padding: 12px;
-      font-size: 0.9rem;
+      background: #f8fafc;
+      color: #334155;
+      border: 1px solid #e2e8f0;
+      padding: 11px 8px;
+      font-size: 0.83rem;
       font-weight: bold;
-      border-radius: var(--radius-md);
+      border-radius: 8px;
       cursor: pointer;
       flex: 1;
       text-align: center;
@@ -194,226 +232,199 @@
       background: #f3f4f6;
       color: #374151;
       border: 1px solid #d1d5db;
-      padding: 12px;
-      font-size: 0.95rem;
+      padding: 11px;
+      font-size: 0.9rem;
       font-weight: bold;
-      border-radius: var(--radius-md);
+      border-radius: 8px;
       cursor: pointer;
       width: 100%;
-      margin-bottom: 14px;
+      margin-bottom: 6px;
       display: none;
       text-align: center;
     }
 
     .result-card {
-      margin-top: 14px;
-      background: var(--bg-card);
-      padding: 16px;
-      border-radius: var(--radius-lg);
+      margin-top: 8px;
+      background: #f8fafc;
+      padding: 12px;
+      border-radius: 12px;
       text-align: left;
       display: none;
-      border: 1px solid var(--border-color);
-      box-shadow: var(--shadow-subtle);
+      border: 1px solid #e2e8f0;
+      font-size: 0.92rem;
       box-sizing: border-box;
       width: 100%;
       overflow: hidden;
     }
     .result-card h3 { 
       color: #047857; 
-      margin-bottom: 14px; 
-      font-size: 1.2rem; 
+      margin-bottom: 8px; 
+      font-size: 1.15rem; 
       text-align: center; 
-      border-bottom: 2px solid var(--border-color); 
-      padding-bottom: 10px; 
+      border-bottom: 1px solid #e2e8f0; 
+      padding-bottom: 6px; 
     }
 
     .fortune-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 6px;
-      margin-bottom: 14px;
+      margin-bottom: 8px;
     }
     .fortune-box {
-      background: var(--bg-secondary);
-      border: 1px solid var(--border-color);
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
       padding: 8px 4px;
-      border-radius: var(--radius-md);
+      border-radius: 6px;
       text-align: center;
     }
-    .fortune-box .f-title { font-size: 0.78rem; color: var(--text-sub); margin-bottom: 3px; font-weight: bold; }
-    .fortune-box .f-score { font-size: 0.95rem; font-weight: bold; color: #059669; }
+    .fortune-box .f-title { font-size: 0.73rem; color: #64748b; margin-bottom: 2px; font-weight: bold; }
+    .fortune-box .f-score { font-size: 0.98rem; font-weight: bold; color: #059669; }
 
     .detail-section {
-      background: var(--bg-secondary);
-      padding: 12px;
-      border-radius: var(--radius-md);
-      margin-bottom: 12px;
-      border: 1px solid var(--border-color);
+      background: #ffffff;
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      border: 1px solid #e2e8f0;
       box-sizing: border-box;
       word-break: keep-all;
     }
-    .detail-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-    .detail-section h4 { font-size: 1rem; font-weight: bold; }
+    .detail-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+    .detail-section h4 { font-size: 0.95rem; font-weight: bold; }
 
-    .shape-desc { font-size: 0.88rem; margin-bottom: 6px; font-weight: bold; }
-    .original-data { font-size: 0.85rem; color: var(--text-main); line-height: 1.5; margin-bottom: 8px; }
-    .analysis-grid { display: flex; flex-direction: column; gap: 8px; }
+    .shape-desc { font-size: 0.83rem; margin-bottom: 4px; font-weight: bold; }
+    .original-data { font-size: 0.82rem; color: #334155; line-height: 1.45; margin-bottom: 6px; background: #f8fafc; padding: 6px; border-radius: 5px; border: 1px solid #e2e8f0; }
+    .analysis-grid { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
     
     .good-box {
-      background: #f0fdf4; border: 1px solid #bbf7d0; padding: 8px 10px; border-radius: 6px; font-size: 0.85rem; line-height: 1.4; color: #166534;
+      background: #f0fdf4; border: 1px solid #bbf7d0; padding: 8px; border-radius: 5px; font-size: 0.83rem; line-height: 1.45; color: #166534;
     }
-    .good-box strong { color: #15803d; display: block; margin-bottom: 2px; font-size: 0.88rem; }
+    .good-box strong { color: #15803d; display: block; margin-bottom: 3px; font-size: 0.88rem; }
 
     .bad-box {
-      background: #fef2f2; border: 1px solid #fecaca; padding: 8px 10px; border-radius: 6px; font-size: 0.85rem; line-height: 1.4; color: #991b1b;
+      background: #fef2f2; border: 1px solid #fecaca; padding: 8px; border-radius: 5px; font-size: 0.83rem; line-height: 1.45; color: #991b1b;
     }
-    .bad-box strong { color: #dc2626; display: block; margin-bottom: 2px; font-size: 0.88rem; }
+    .bad-box strong { color: #dc2626; display: block; margin-bottom: 3px; font-size: 0.88rem; }
 
     .legend-box {
       display: flex;
       justify-content: space-around;
-      background: var(--bg-secondary);
-      padding: 10px;
-      border-radius: var(--radius-md);
-      margin-bottom: 14px;
-      font-size: 0.88rem;
+      background: #f8fafc;
+      padding: 8px;
+      border-radius: 6px;
+      margin-bottom: 6px;
+      font-size: 0.82rem;
       font-weight: bold;
-      border: 1px solid var(--border-color);
+      border: 1px solid #e2e8f0;
     }
-    .legend-item { display: flex; align-items: center; gap: 6px; }
-    .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+    .legend-item { display: flex; align-items: center; gap: 4px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 
     .share-action-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-top: 14px;
-      padding-top: 12px;
-      border-top: 2px dashed var(--border-color);
+      gap: 6px;
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px dashed #cbd5e1;
     }
     .share-btn {
-      padding: 12px; border-radius: var(--radius-md); font-size: 0.95rem; font-weight: bold; border: none; cursor: pointer;
+      padding: 9px; border-radius: 6px; font-size: 0.83rem; font-weight: bold; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 4px;
     }
-    .btn-save { background: var(--bg-secondary); color: var(--text-main); border: 1px solid var(--border-color); }
+    .btn-save { background: #e2e8f0; color: #334155; border: 1px solid #cbd5e1; }
     .btn-share { background: #10b981; color: #ffffff; }
-
-    .app-nav {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px 14px;
-      background: var(--bg-card);
-      border-bottom: 1px solid var(--border-color);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-    .nav-brand { font-weight: bold; text-decoration: none; color: var(--text-main); font-size: 1rem; }
-    .nav-home-btn {
-      background: var(--bg-secondary);
-      color: var(--text-main);
-      border: 1px solid var(--border-color);
-      padding: 5px 10px;
-      border-radius: var(--radius-sm);
-      font-size: 0.82rem;
-      font-weight: bold;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-    }
   </style>
 </head>
 <body>
 
   <nav class="app-nav">
     <a href="#" class="nav-brand">🔮 AI 운세 센터</a>
-    <a class="nav-home-btn" id="btn-back-home" onclick="goHome()">🏠 AI 운세 센터 홈</a>
+    <button class="nav-home-btn" id="btn-back-home" onclick="goHome()">🏠 AI 운세 센터 홈</button>
   </nav>
 
-  <div class="app-container" id="capture-container">
-    <div class="white-card">
-      <div style="text-align: center; margin-bottom: 14px;">
-        <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 4px;">✋ AI 손금(수상) 정밀 분석</h2>
-        <p style="color: var(--text-sub); font-size: 0.88rem;">AI 비전 모델이 손바닥 관절을 분석하여 최적의 손금 곡선을 매핑합니다</p>
+  <div class="container" id="capture-container">
+    <div class="app-header">
+      <h1 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 2px; color: #047857;">✋ AI 손금(수상) 정밀 분석</h1>
+    </div>
+    <p class="desc">AI 비전 모델이 손바닥 관절을 분석하여 최적의 손금 곡선을 매핑합니다</p>
+
+    <div class="guide-box">
+      <div class="guide-title">🤖 AI 비전 곡선 피팅 엔진 적용 안내</div>
+      <ul>
+        <li><strong>완자동 딥러닝 핏:</strong> 수동 조정을 없애고 21개 랜드마크 비율을 역산합니다.</li>
+        <li><strong>정밀 곡선 연동:</strong> 생명선·두뇌선·운명선의 곡률이 오차 없이 정확히 피팅됩니다.</li>
+      </ul>
+    </div>
+
+    <div class="top-controls">
+      <button id="btn-switch-cam" class="cam-switch-btn" onclick="switchCamera()">🔄 카메라 전환</button>
+      <div id="ai-status-badge" style="font-size: 0.78rem; color: #059669; font-weight: bold;">🟢 AI 대기 중</div>
+    </div>
+
+    <div id="status" class="status-msg">💡 손바닥 안쪽이 보이도록 비춰주세요...</div>
+
+    <div class="video-wrapper">
+      <video id="webcam" class="mirrored" autoplay playsinline muted></video>
+      <img id="snapshot-img" class="uploaded-img" alt="스냅샷 이미지">
+      <img id="uploaded-preview" class="uploaded-img" alt="업로드 이미지">
+      <canvas id="output_canvas"></canvas>
+
+      <div id="palm-guide-frame" class="palm-guide-frame">
+        <span>✋ 손바닥을 여기에 맞춰주세요</span>
       </div>
 
-      <div class="guide-box">
-        <div class="guide-title">🤖 AI 비전 곡선 피팅 엔진 적용 안내</div>
-        <ul>
-          <li><strong>완자동 딥러닝 핏:</strong> 수동 조정을 없애고 21개 랜드마크 비율을 역산합니다.</li>
-          <li><strong>정밀 곡선 연동:</strong> 생명선·두뇌선·운명선의 곡률이 오차 없이 정확히 피팅됩니다.</li>
-        </ul>
+      <div id="scan-overlay" class="scan-overlay">
+        <div class="scan-line"></div>
       </div>
+    </div>
 
-      <div class="top-controls">
-        <button id="btn-switch-cam" class="cam-switch-btn" onclick="switchCamera()">🔄 카메라 전환</button>
-        <div id="ai-status-badge" style="font-size: 0.8rem; color: #059669; font-weight: bold;">🟢 AI 대기 중</div>
-      </div>
+    <input type="file" id="file-input" accept="image/*" style="display: none;">
 
-      <div id="status" class="status-msg">💡 손바닥 안쪽이 보이도록 비춰주세요...</div>
+    <button id="btn-reset-scan" class="reset-scan-btn" onclick="resetToCamView()">↩️ 다시 촬영하기 (앞 화면으로)</button>
 
-      <div class="video-wrapper">
-        <video id="webcam" class="mirrored" autoplay playsinline muted></video>
-        <img id="snapshot-img" class="uploaded-img" alt="스냅샷 이미지">
-        <img id="uploaded-preview" class="uploaded-img" alt="업로드 이미지">
-        <canvas id="output_canvas"></canvas>
+    <div class="main-btn-group" id="btn-group-action">
+      <button id="btn-action" class="main-btn" onclick="startPalmScan()">✋ AI 손금 자동 정밀 스캔</button>
+      <button class="sub-upload-btn" onclick="document.getElementById('file-input').click()">📁 사진 업로드</button>
+    </div>
 
-        <div id="palm-guide-frame" class="palm-guide-frame">
-          <span>✋ 손바닥을 여기에 맞춰주세요</span>
+    <div class="legend-box">
+      <div class="legend-item"><span class="dot" style="background:#f59e0b;"></span>생명선</div>
+      <div class="legend-item"><span class="dot" style="background:#3b82f6;"></span>두뇌선</div>
+      <div class="legend-item"><span class="dot" style="background:#10b981;"></span>운명선</div>
+    </div>
+
+    <div id="result" class="result-card">
+      <h3>📊 AI 손금(수상) 정밀 분석 리포트</h3>
+
+      <div class="fortune-grid">
+        <div class="fortune-box">
+          <div class="f-title">❤️ 생명선</div>
+          <div class="f-score" id="score-life">95점 💪</div>
         </div>
-
-        <div id="scan-overlay" class="scan-overlay">
-          <div class="scan-line"></div>
+        <div class="fortune-box">
+          <div class="f-title">💡 두뇌선</div>
+          <div class="f-score" id="score-brain">92점 🧠</div>
+        </div>
+        <div class="fortune-box">
+          <div class="f-title">💰 운명선</div>
+          <div class="f-score" id="score-fate">94점 💰</div>
         </div>
       </div>
 
-      <input type="file" id="file-input" accept="image/*" style="display: none;">
+      <div id="details-container"></div>
 
-      <button id="btn-reset-scan" class="reset-scan-btn" onclick="resetToCamView()">↩️ 다시 촬영하기 (앞 화면으로)</button>
-
-      <div class="main-btn-group" id="btn-group-action">
-        <button id="btn-action" class="main-btn" onclick="startPalmScan()">✋ AI 손금 자동 정밀 스캔</button>
-        <button class="sub-upload-btn" onclick="document.getElementById('file-input').click()">📁 사진 업로드</button>
+      <div class="detail-section" style="border-left: 3px solid #059669; margin-top: 6px;">
+        <div class="detail-header">
+          <h4 style="color: #065f46;">💡 종합 평론 및 개운 조언</h4>
+        </div>
+        <p id="desc-summary" style="font-size: 0.88rem; line-height: 1.45; color: #334155;">-</p>
       </div>
 
-      <div class="legend-box">
-        <div class="legend-item"><span class="dot" style="background:#f59e0b;"></span>생명선</div>
-        <div class="legend-item"><span class="dot" style="background:#3b82f6;"></span>두뇌선</div>
-        <div class="legend-item"><span class="dot" style="background:#10b981;"></span>운명선</div>
-      </div>
-
-      <div id="result" class="result-card">
-        <h3>📊 AI 손금(수상) 정밀 분석 리포트</h3>
-
-        <div class="fortune-grid">
-          <div class="fortune-box">
-            <div class="f-title">❤️ 생명선</div>
-            <div class="f-score" id="score-life">95점 💪</div>
-          </div>
-          <div class="fortune-box">
-            <div class="f-title">💡 두뇌선</div>
-            <div class="f-score" id="score-brain">92점 🧠</div>
-          </div>
-          <div class="fortune-box">
-            <div class="f-title">💰 운명선</div>
-            <div class="f-score" id="score-fate">94점 💰</div>
-          </div>
-        </div>
-
-        <div id="details-container"></div>
-
-        <div class="detail-section" style="border-left: 6px solid #059669; margin-top: 12px;">
-          <div class="detail-header">
-            <h4 style="color: #065f46;">💡 종합 평론 및 개운 조언</h4>
-          </div>
-          <p id="desc-summary" style="font-size: 0.9rem; line-height: 1.6; color: var(--text-main);">-</p>
-        </div>
-
-        <div class="share-action-grid">
-          <button class="share-btn btn-save" onclick="saveResultImage()">💾 결과 저장</button>
-          <button class="share-btn btn-share" onclick="shareResult()">💛 결과 공유</button>
-        </div>
+      <div class="share-action-grid">
+        <button class="share-btn btn-save" onclick="saveResultImage()">💾 결과 저장</button>
+        <button class="share-btn btn-share" onclick="shareResult()">💛 결과 공유</button>
       </div>
     </div>
   </div>
@@ -439,6 +450,14 @@
     let cameraInstance = null;
     let lastHandLandmarks = null;
     let isScanningDone = false;
+
+    function goHome() {
+      if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        location.href = '/'; 
+      }
+    }
 
     function initMediaPipe() {
       hands = new Hands({
@@ -691,7 +710,7 @@
         
         const snapshotDataUrl = canvas.toDataURL("image/png");
         snapshotImg.src = snapshotDataUrl;
-        snapshotImg.style.display = "block"; // 스냅샷 이미지 유지 처리
+        snapshotImg.style.display = "block";
         video.style.display = "none";
         targetSource = snapshotImg;
       }
@@ -751,10 +770,10 @@
     function generateDetailedReport() {
       const detailsDiv = document.getElementById("details-container");
       detailsDiv.innerHTML = `
-        <div class="detail-section" style="border-left: 6px solid #f59e0b;">
+        <div class="detail-section" style="border-left: 3px solid #f59e0b;">
           <div class="detail-header">
             <h4 style="color: #b45309;">❤️ 생명선 분석</h4>
-            <span style="font-size: 0.9rem; font-weight: bold; color: #f59e0b;">95점</span>
+            <span style="font-size: 0.85rem; font-weight: bold; color: #f59e0b;">95점</span>
           </div>
           <div class="shape-desc" style="color: #d97706;">📐 엄지 두덩이 아치형 정밀 연산</div>
           <div class="original-data">💡 타고난 체력적 활력과 면역력이 탄탄하며, 장기 레이스에서도 쉽게 지치지 않는 회복 탄력성을 지니고 있습니다.</div>
@@ -764,10 +783,10 @@
           </div>
         </div>
 
-        <div class="detail-section" style="border-left: 6px solid #3b82f6;">
+        <div class="detail-section" style="border-left: 3px solid #3b82f6;">
           <div class="detail-header">
             <h4 style="color: #1d4ed8;">💡 두뇌선 분석</h4>
-            <span style="font-size: 0.9rem; font-weight: bold; color: #3b82f6;">92점</span>
+            <span style="font-size: 0.85rem; font-weight: bold; color: #3b82f6;">92점</span>
           </div>
           <div class="shape-desc" style="color: #2563eb;">📐 손바닥 중심 수평 흐름 정밀 연산</div>
           <div class="original-data">💡 직관적인 판단력과 구조적인 분석 능력이 뛰어납니다. 복잡한 문제의 본질을 빠르게 파악합니다.</div>
@@ -777,10 +796,10 @@
           </div>
         </div>
 
-        <div class="detail-section" style="border-left: 6px solid #10b981;">
+        <div class="detail-section" style="border-left: 3px solid #10b981;">
           <div class="detail-header">
             <h4 style="color: #047857;">💰 운명선 분석</h4>
-            <span style="font-size: 0.9rem; font-weight: bold; color: #10b981;">94점</span>
+            <span style="font-size: 0.85rem; font-weight: bold; color: #10b981;">94점</span>
           </div>
           <div class="shape-desc" style="color: #059669;">📐 손목-중지 수직 중심축 정밀 연산</div>
           <div class="original-data">💡 목표 지향적인 성취 에너지가 강합니다. 노력과 커리어 궤적에 비례하여 확실한 성과가 뒤따릅니다.</div>
