@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>AI 인연 올인원 궁합 분석</title>
+  
+  <meta name="theme-color" content="#f8fafc">
+  <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
+  
+  <!-- html2canvas for capturing result card as image -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    
+    html, body {
+      width: 100%;
+      min-height: 100vh;
+      min-height: 100dvh;
+      background-color: #f8fafc;
+      color: #1e293b;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      overflow-x: hidden;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: max(env(safe-area-inset-top), 12px) 12px max(env(safe-area-inset-bottom), 12px) 12px;
+    }
+
+    .app-nav {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      margin-bottom: 8px;
+      font-size: 0.9rem;
+    }
+    .nav-brand { font-weight: bold; color: #4338ca; text-decoration: none; }
+    .nav-home-btn { color: #64748b; text-decoration: none; cursor: pointer; background: transparent; border: none; font-size: 0.9rem; }
+
+    .container {
+      background: #ffffff;
+      padding: 18px;
+      border-radius: 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+      max-width: 480px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .app-header {
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    h1 { font-size: 1.3rem; color: #334155; margin-bottom: 4px; }
+    p.subtitle { font-size: 0.85rem; color: #64748b; }
+
+    .form-section {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .form-section h3 {
+      font-size: 0.95rem;
+      color: #475569;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .input-group {
+      margin-bottom: 10px;
+    }
+    .input-group:last-child { margin-bottom: 0; }
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      color: #64748b;
+      margin-bottom: 4px;
+      font-weight: 500;
+    }
+
+    input[type="text"], select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      background: #ffffff;
+      color: #1e293b;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input[type="text"]:focus, select:focus {
+      border-color: #6366f1;
+    }
+
+    .row-inputs {
+      display: flex;
+      gap: 8px;
+    }
+    .row-inputs .input-group {
+      flex: 1;
+    }
+
+    .submit-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      color: white;
+      border: none;
+      padding: 13px;
+      font-size: 1rem;
+      font-weight: bold;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+      margin-top: 6px;
+      transition: opacity 0.2s;
+    }
+    .submit-btn:active { opacity: 0.9; }
+
+    /* 결과 카드 스타일 */
+    .result-card {
+      margin-top: 16px;
+      background: #ffffff;
+      padding: 16px;
+      border-radius: 16px;
+      display: none;
+      border: 1px solid #e2e8f0;
+      box-sizing: border-box;
+      width: 100%;
+    }
+
+    .result-header {
+      text-align: center;
+      border-bottom: 1px solid #f1f5f9;
+      padding-bottom: 12px;
+      margin-bottom: 14px;
+    }
+    .result-header h2 { font-size: 1.15rem; color: #1e293b; margin-bottom: 4px; }
+    .total-score-badge {
+      display: inline-block;
+      background: #e0e7ff;
+      color: #4338ca;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.95rem;
+      font-weight: bold;
+      margin-top: 6px;
+    }
+
+    .analysis-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+    .analysis-title {
+      font-size: 0.88rem;
+      font-weight: bold;
+      color: #334155;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .analysis-desc {
+      font-size: 0.83rem;
+      color: #475569;
+      line-height: 1.5;
+    }
+
+    .summary-box {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 10px;
+      padding: 12px;
+      margin-top: 12px;
+    }
+    .summary-box h4 {
+      font-size: 0.9rem;
+      color: #166534;
+      margin-bottom: 4px;
+    }
+    .summary-box p {
+      font-size: 0.83rem;
+      color: #14532d;
+      line-height: 1.5;
+    }
+
+    /* 획수 해부도 보기 버튼 스타일 */
+    .breakdown-toggle-btn {
+      width: 100%;
+      background: #f1f5f9;
+      color: #4f46e5;
+      border: 1px dashed #6366f1;
+      padding: 10px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 10px;
+      text-align: center;
+      transition: background 0.2s;
+    }
+    .breakdown-toggle-btn:hover { background: #e0e7ff; }
+
+    /* 해부도 모달 패널 스타일 */
+    .breakdown-panel {
+      display: none;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 14px;
+      margin-top: 10px;
+      font-size: 0.82rem;
+      color: #334155;
+      text-align: left;
+    }
+    .breakdown-panel h4 {
+      font-size: 0.9rem;
+      color: #4f46e5;
+      margin-bottom: 8px;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 4px;
+    }
+    .breakdown-stream {
+      font-family: monospace;
+      font-size: 0.85rem;
+      background: #ffffff;
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+      color: #7e22ce;
+      word-break: break-all;
+      margin-top: 6px;
+      margin-bottom: 8px;
+    }
+
+    .action-btn-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .sub-action-btn {
+      flex: 1;
+      background: #ffffff;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+      padding: 10px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      text-align: center;
+    }
+    .sub-action-btn:hover { background: #f1f5f9; }
+  </style>
+</head>
+<body>
+
+  <nav class="app-nav">
+    <a href="index.html" class="nav-brand">✨ AI 인연 궁합</a>
+    <button class="nav-home-btn" onclick="goToHome()">🏠 AI 운세 센터 홈</button>
+  </nav>
+
+  <div class="container" id="capture-area">
+    <div class="app-header">
+      <h1>AI 인연 궁합 분석</h1>
+      <p class="subtitle">이름 획수, 띠, 별자리, 혈액형으로 알아보는 올인원 궁합</p>
+    </div>
+
+    <!-- 입력 폼 -->
+    <div id="input-form-container">
+      <div class="form-section">
+        <h3>👤 첫 번째 분 (본인)</h3>
+        <div class="input-group">
+          <label>이름 (이름 획수 궁합용)</label>
+          <input type="text" id="name1" placeholder="예: 홍길동">
+        </div>
+        <div class="row-inputs" style="margin-top: 8px;">
+          <div class="input-group">
+            <label>생년월일 (띠 계산용)</label>
+            <select id="year1"></select>
+          </div>
+          <div class="input-group">
+            <label>생월일 (별자리용)</label>
+            <div class="row-inputs">
+              <select id="month1" style="flex:1;"></select>
+              <select id="day1" style="flex:1;"></select>
+            </div>
+          </div>
+          <div class="input-group" style="flex: 0.7;">
+            <label>혈액형</label>
+            <select id="blood1">
+              <option value="A">A형</option>
+              <option value="B">B형</option>
+              <option value="O">O형</option>
+              <option value="AB">AB형</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h3>👤 두 번째 분 (상대방)</h3>
+        <div class="input-group">
+          <label>이름 (이름 획수 궁합용)</label>
+          <input type="text" id="name2" placeholder="예: 성춘향">
+        </div>
+        <div class="row-inputs" style="margin-top: 8px;">
+          <div class="input-group">
+            <label>생년월일 (띠 계산용)</label>
+            <select id="year2"></select>
+          </div>
+          <div class="input-group">
+            <label>생월일 (별자리용)</label>
+            <div class="row-inputs">
+              <select id="month2" style="flex:1;"></select>
+              <select id="day2" style="flex:1;"></select>
+            </div>
+          </div>
+          <div class="input-group" style="flex: 0.7;">
+            <label>혈액형</label>
+            <select id="blood2">
+              <option value="A">A형</option>
+              <option value="B">B형</option>
+              <option value="O">O형</option>
+              <option value="AB">AB형</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <button class="submit-btn" onclick="calculateCompatibility()">🔥 올인원 궁합 정밀 분석 시작</button>
+    </div>
+
+    <!-- 결과 카드 영역 -->
+    <div id="result" class="result-card">
+      <div class="result-header">
+        <h2 id="result-names">두 분의 인연 궁합 리포트</h2>
+        <div id="total-score" class="total-score-badge">종합 궁합 점수: 92점</div>
+      </div>
+
+      <div class="analysis-box">
+        <div class="analysis-title">
+          <span>✏️ 추억의 전설! 이름 획수 궁합</span>
+          <span id="score-name" style="color:#4f46e5; font-weight:bold;">95점</span>
+        </div>
+        <p id="desc-name" class="analysis-desc">-</p>
+        
+        <!-- 이름 획수 해부도 토글 버튼 -->
+        <button class="breakdown-toggle-btn" onclick="toggleBreakdown()">🔍 이름 획수 궁합 해부도 보기</button>
+        
+        <!-- 숨겨진 해부도 상세 패널 -->
+        <div id="breakdown-panel" class="breakdown-panel">
+          <h4>📊 획수 계산 및 교차 해부 내역</h4>
+          <div id="breakdown-content">-</div>
+        </div>
+      </div>
+
+      <div class="analysis-box">
+        <div class="analysis-title">
+          <span>🐾 동물 본능! 띠 궁합 케미</span>
+          <span id="score-zodiac" style="color:#4f46e5; font-weight:bold;">90점</span>
+        </div>
+        <p id="desc-zodiac" class="analysis-desc">-</p>
+      </div>
+
+      <div class="analysis-box">
+        <div class="analysis-title">
+          <span>🌟 우주적 파장! 별자리 성격 궁합</span>
+          <span id="score-star" style="color:#4f46e5; font-weight:bold;">94점</span>
+        </div>
+        <p id="desc-star" class="analysis-desc">-</p>
+      </div>
+
+      <div class="analysis-box">
+        <div class="analysis-title">
+          <span>🩸 리얼 생존! 혈액형 연애 스타일</span>
+          <span id="score-blood" style="color:#4f46e5; font-weight:bold;">88점</span>
+        </div>
+        <p id="desc-blood" class="analysis-desc">-</p>
+      </div>
+
+      <div class="summary-box">
+        <h4>💡 AI 수석 연애 참모의 최종 진단</h4>
+        <p id="desc-summary">-</p>
+      </div>
+
+      <div class="action-btn-row" id="action-btn-row">
+        <button class="sub-action-btn" onclick="resetForm()">🔄 다시 입력하기</button>
+        <button class="sub-action-btn" onclick="saveResult()" style="background:#4f46e5; color:#fff; border-color:#4f46e5;">📥 결과저장</button>
+        <button class="sub-action-btn" onclick="shareResult()">📤 공유하기</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function initSelectors() {
+      const currentYear = new Date().getFullYear();
+      const y1 = document.getElementById('year1');
+      const y2 = document.getElementById('year2');
+      
+      for(let y = currentYear; y >= 1950; y--) {
+        y1.add(new Option(y + '년', y));
+        y2.add(new Option(y + '년', y));
+      }
+      y1.value = 1995;
+      y2.value = 1997;
+
+      const m1 = document.getElementById('month1');
+      const m2 = document.getElementById('month2');
+      for(let m = 1; m <= 12; m++) {
+        m1.add(new Option(m + '월', m));
+        m2.add(new Option(m + '월', m));
+      }
+      m1.value = 5;
+      m2.value = 8;
+
+      const d1 = document.getElementById('day1');
+      const d2 = document.getElementById('day2');
+      for(let d = 1; d <= 31; d++) {
+        d1.add(new Option(d + '일', d));
+        d2.add(new Option(d + '일', d));
+      }
+      d1.value = 15;
+      d2.value = 20;
+    }
+
+    function goToHome() {
+      location.href = 'index.html';
+    }
+
+    const strokeMap = {
+      'ㄱ': 2, 'ㄲ': 4, 'ㄴ': 2, 'ㄷ': 3, 'ㄸ': 6, 'ㄹ': 5, 'ㅁ': 4, 'ㅂ': 4, 'ㅃ': 8,
+      'ㅅ': 2, 'ㅆ': 4, 'ㅇ': 1, 'ㅈ': 3, 'ㅉ': 6, 'ㅊ': 4, 'ㅋ': 3, 'ㅌ': 4, 'ㅍ': 4, 'ㅎ': 3,
+      'ㅏ': 2, 'ㅐ': 3, 'ㅑ': 3, 'ㅒ': 4, 'ㅓ': 2, 'ㅔ': 3, 'ㅕ': 3, 'ㅖ': 4, 'ㅗ': 2,
+      'ㅘ': 4, 'ㅙ': 5, 'ㅚ': 3, 'ㅛ': 3, 'ㅜ': 2, 'ㅝ': 4, 'ㅞ': 5, 'ㅟ': 3, 'ㅠ': 3,
+      'ㅡ': 1, 'ㅢ': 2, 'ㅣ': 1
+    };
+
+    function decomposeHangul(char) {
+      const code = char.charCodeAt(0) - 0xAC00;
+      if (code < 0 || code > 11171) return [char];
+
+      const choIdx = Math.floor(code / 588);
+      const jungIdx = Math.floor((code % 588) / 28);
+      const jongIdx = code % 28;
+
+      const choTable = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+      const jungTable = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
+      const jongTable = ['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+
+      let result = [choTable[choIdx], jungTable[jungIdx]];
+      const jong = jongTable[jongIdx];
+      if (jong !== '') {
+        if (jong === 'ㄳ') result.push('ㄱ', 'ㅅ');
+        else if (jong === 'ㄵ') result.push('ㄴ', 'ㅈ');
+        else if (jong === 'ㄶ') result.push('ㄴ', 'ㅎ');
+        else if (jong === 'ㄺ') result.push('ㄹ', 'ㄱ');
+        else if (jong === 'ㄻ') result.push('ㄹ', 'ㅁ');
+        else if (jong === 'ㄼ') result.push('ㄹ', 'ㅂ');
+        else if (jong === 'ㄽ') result.push('ㄹ', 'ㅅ');
+        else if (jong === 'ㄾ') result.push('ㄹ', 'ㅌ');
+        else if (jong === 'ㄿ') result.push('ㄹ', 'ㅍ');
+        else if (jong === 'ㅀ') result.push('ㄹ', 'ㅎ');
+        else if (jong === 'ㅄ') result.push('ㅂ', 'ㅅ');
+        else result.push(jong);
+      }
+      return result;
+    }
+
+    function calculateNameCompatibilityDetailed(name1, name2) {
+      let list1 = [];
+      let breakdownText1 = "";
+      for (let char of name1) {
+        let decomp = decomposeHangul(char);
+        let charSum = 0;
+        let decompStrs = [];
+        for (let d of decomp) {
+          let s = strokeMap[d] || 2;
+          charSum += s;
+          decompStrs.push(`${d}(${s})`);
+        }
+        list1.push(...decomp.map(d => strokeMap[d] || 2));
+        breakdownText1 += `• ${char} $\\rightarrow$ ${decompStrs.join('+')} = [${charSum}]<br>`;
+      }
+
+      let list2 = [];
+      let breakdownText2 = "";
+      for (let char of name2) {
+        let decomp = decomposeHangul(char);
+        let charSum = 0;
+        let decompStrs = [];
+        for (let d of decomp) {
+          let s = strokeMap[d] || 2;
+          charSum += s;
+          decompStrs.push(`${d}(${s})`);
+        }
+        list2.push(...decomp.map(d => strokeMap[d] || 2));
+        breakdownText2 += `• ${char} $\\rightarrow$ ${decompStrs.join('+')} = [${charSum}]<br>`;
+      }
+
+      let mixed = [];
+      let maxLen = Math.max(list1.length, list2.length);
+      for (let i = 0; i < maxLen; i++) {
+        if (i < list1.length) mixed.push(list1[i]);
+        if (i < list2.length) mixed.push(list2[i]);
+      }
+
+      let current = [...mixed];
+      let stepsLog = `<strong>1단계 변환:</strong><br>👤 ${name1}:<br>${breakdownText1}👤 ${name2}:<br>${breakdownText2}<br>`;
+      stepsLog += `<strong>2단계 교차 나열 스트림:</strong><br><div class="breakdown-stream">${mixed.join(', ')}</div>`;
+
+      let stepCount = 1;
+      while (current.length > 2) {
+        let next = [];
+        for (let i = 0; i < current.length - 1; i++) {
+          next.push((current[i] + current[i+1]) % 10);
+        }
+        stepsLog += `축소 ${stepCount}회차: [${next.join(', ')}]<br>`;
+        current = next;
+        stepCount++;
+      }
+
+      let score = current.length === 2 ? current[0] * 10 + current[1] : current[0] * 11;
+      if (score < 50) score += 40;
+      if (score > 99) score = 98;
+
+      let desc = "";
+      if (score >= 90) {
+        desc = `두 분의 이름을 획수 단위로 교차 분석한 결과 <strong>${score}점</strong>이라는 경이로운 수치가 나왔습니다! 전생에 우주를 구한 인연처럼 이름의 결합만으로도 엄청난 시너지와 폭발적인 케미를 자랑합니다.`;
+      } else if (score >= 80) {
+        desc = `이름 획수 합산 결과 <strong>${score}점</strong>으로 아주 훌륭한 궁합입니다! 사소한 의견 차이가 있어도 서로 이름을 부를 때마다 마음이 녹아내리는 환상의 짝꿍입니다.`;
+      } else {
+        desc = `이름 획수 분석 결과 <strong>${score}점</strong>입니다. 때로는 티격태격 불협화음이 날 수도 있지만, 그만큼 서로에게 강렬하게 끌리는 매력적인 인연의 고리입니다.`;
+      }
+
+      return { score, desc, stepsLog };
+    }
+
+    const zodiacInfo = {
+      '쥐': { animal: '쥐띠', trait: '재치와 생존력이 뛰어나며 눈치가 백단입니다.' },
+      '소': { animal: '소띠', trait: '우직하고 묵묵하게 상대방을 품어주는 태산 같은 면모가 있습니다.' },
+      '호랑이': { animal: '호랑이띠', trait: '리더십과 결단력이 강하지만 내 사람에게는 한없이 따뜻합니다.' },
+      '토끼': { animal: '토끼띠', trait: '섬세하고 다정다감하며 분위기를 부드럽게 만드는 재주가 있습니다.' },
+      '용': { animal: '용띠', trait: '스케일이 크고 야망이 넘치며 에너지가 폭발합니다.' },
+      '뱀': { animal: '뱀띠', trait: '지혜롭고 직관력이 예리하여 상대의 마음을 꿰뚫어 봅니다.' },
+      '말': { animal: '말띠', trait: '활동적이고 시원시원하며 어디서든 주목받는 에너자이저입니다.' },
+      '양': { animal: '양띠', trait: '배려심이 깊고 평화주의자이며 감성적인 공감 능력이 탁월합니다.' },
+      '원숭이': { animal: '원숭이띠', trait: '재주가 넘치고 유머 감각이 뛰어나 지루할 틈을 안 줍니다.' },
+      '닭': { animal: '닭띠', trait: '치밀하고 계획적이며 완벽을 추구하는 스마트한 매력이 있습니다.' },
+      '개': { animal: '개띠', trait: '충성심과 의리가 철철 넘치며 한번 믿은 사람은 절대 배신하지 않습니다.' },
+      '돼지': { animal: '돼지띠', trait: '복복복! 넘치는 복과 낙천적인 성격으로 주변을 행복하게 만듭니다.' }
+    };
+
+    function getZodiac(year) {
+      const animals = ['원숭이', '닭', '개', '돼지', '쥐', '소', '호랑이', '토끼', '용', '뱀', '말', '양'];
+      return animals[year % 12];
+    }
+
+    function getConstellation(month, day) {
+      const m = parseInt(month), d = parseInt(day);
+      if ((m === 3 && d >= 21) || (m === 4 && d <= 19)) return '양자리';
+      if ((m === 4 && d >= 20) || (m === 5 && d <= 20)) return '황소자리';
+      if ((m === 5 && d >= 21) || (m === 6 && d <= 21)) return '쌍둥이자리';
+      if ((m === 6 && d >= 22) || (m === 7 && d <= 22)) return '게자리';
+      if ((m === 7 && d >= 23) || (m === 8 && d <= 22)) return '사자자리';
+      if ((m === 8 && d >= 23) || (m === 9 && d <= 23)) return '처녀자리';
+      if ((m === 9 && d >= 24) || (m === 10 && d <= 22)) return '천칭자리';
+      if ((m === 10 && d >= 23) || (m === 11 && d <= 22)) return '전갈자리';
+      if ((m === 11 && d >= 23) || (m === 12 && d <= 24)) return '사수자리';
+      if ((m === 12 && d >= 25) || (m === 1 && d <= 19)) return '염소자리';
+      if ((m === 1 && d >= 20) || (m === 2 && d <= 18)) return '물병자리';
+      return '물고기자리';
+    }
+
+    const bloodDesc = {
+      'A-A': '두 분 다 세심하고 꽁지 잡기(?)를 잘 안 하지만, 속으로 삭이는 스타일! 마음 터놓는 대화가 200% 필수입니다.',
+      'A-B': 'A형의 꼼꼼함과 B형의 자유분방함이 만나 완벽한 단짝 케미! 서로에게 없는 매력에 푹 빠지는 조합입니다.',
+      'A-O': 'A형의 든든한 서포트와 O형의 리더십이 만나 환상의 팀워크를 자랑합니다. 티격태격해도 결속력은 최고!',
+      'A-AB': 'A형의 배려심과 AB형의 톡톡 튀는 센스가 만나 지루할 틈이 없는 로맨틱한 시너지를 냅니다.',
+      'B-A': 'B형의 직진 에너지를 A형이 따뜻하게 받아주어 안정감 속의 스릴을 즐기는 매력적인 관계입니다.',
+      'B-B': '불꽃 튀는 에너자이저 커플! 한 번 불붙으면 누구도 말릴 수 없는 폭풍 같은 사랑을 나눕니다.',
+      'B-O': '텐션 폭발! 만나기만 하면 웃음이 끊이지 않는 개그코드 최강 조합입니다.',
+      'B-AB': '자유로운 영혼들의 만남! 서로의 프라이버시를 존중하며 쿨하게 연애하는 세련된 커플입니다.',
+      'O-A': 'O형의 리드와 A형의 현명한 내조가 빛을 발하는 안정적인 결혼 최적화 궁합입니다.',
+      'O-B': '유쾌 통쾌 상쾌! 서로가 서로에게 가장 편안한 베스트 프렌드이자 연인입니다.',
+      'O-O': '승부욕과 열정이 넘쳐 가끔 불꽃이 튀지만, 화해할 때는 화끈하게 풀고 끝내는 쿨한 커플입니다.',
+      'O-AB': 'O형의 따뜻한 온기가 냉철해 보이는 AB형의 심장을 녹이는 로맨틱 영화 같은 조합입니다.',
+      'AB-A': '생각의 결이 아주 섬세하게 통하는 두 사람! 말하지 않아도 눈빛만 보면 속마음을 알아챕니다.',
+      'AB-B': '누구도 예측할 수 없는 엉뚱하고 독특한 매력으로 둘만의 평행 세계를 구축하는 개성 만점 커플입니다.',
+      'AB-O': '이성과 감각의 황금 밸런스! 현실적인 문제 해결 능력이 뛰어나 함께라면 무서울 게 없습니다.',
+      'AB-AB': '우주 최고 마이웨이들의 만남! 서로를 너무 잘 이해해서 지구상에서 가장 편안함을 느낍니다.'
+    };
+
+    function calculateCompatibility() {
+      const name1 = document.getElementById('name1').value.trim() || '홍길동';
+      const name2 = document.getElementById('name2').value.trim() || '성춘향';
+      
+      const y1 = document.getElementById('year1').value;
+      const y2 = document.getElementById('year2').value;
+      const m1 = document.getElementById('month1').value;
+      const d1 = document.getElementById('day1').value;
+      const m2 = document.getElementById('month2').value;
+      const d2 = document.getElementById('day2').value;
+      const b1 = document.getElementById('blood1').value;
+      const b2 = document.getElementById('blood2').value;
+
+      // 1. 이름 획수 궁합 및 해부 데이터 계산
+      const nameResult = calculateNameCompatibilityDetailed(name1, name2);
+
+      // 2. 띠 및 별자리, 혈액형 계산
+      const z1Name = getZodiac(y1);
+      const z2Name = getZodiac(y2);
+      const z1 = zodiacInfo[z1Name];
+      const z2 = zodiacInfo[z2Name];
+      
+      const seed = (parseInt(y1) + parseInt(y2) + name1.length + name2.length) % 15;
+      const zodiacScore = 83 + ((seed * 3) % 16);
+      const starScore = 85 + ((seed * 5) % 14);
+      const bloodScore = 80 + ((seed * 7) % 19);
+      
+      const totalScore = Math.floor((nameResult.score + zodiacScore + starScore + bloodScore) / 4);
+
+      const c1 = getConstellation(m1, d1);
+      const c2 = getConstellation(m2, d2);
+
+      document.getElementById('result-names').textContent = `${name1} ❤️ ${name2} 올인원 궁합 리포트`;
+      document.getElementById('total-score').textContent = `종합 궁합 점수: ${totalScore}점 (✨ 완벽한 인연)`;
+
+      // 화면 반영
+      document.getElementById('score-name').textContent = nameResult.score + '점';
+      document.getElementById('desc-name').innerHTML = nameResult.desc;
+      document.getElementById('breakdown-content').innerHTML = nameResult.stepsLog;
+      document.getElementById('breakdown-panel').style.display = 'none'; // 초기엔 숨김
+
+      document.getElementById('score-zodiac').textContent = zodiacScore + '점';
+      document.getElementById('desc-zodiac').innerHTML = 
+        `<strong>${name1}님은 ${z1.animal}</strong>(${z1.trait})이며, <strong>${name2}님은 ${z2.animal}</strong>(${z2.trait})입니다.<br><br>` +
+        `두 띠의 기운이 만나 서로의 부족한 단점을 마법처럼 상쇄해 줍니다. 갈등이 생기더라도 동물적인 직감으로 상대방의 기분을 눈치채고 먼저 손을 내밀게 되는 천생연분 궁합입니다!`;
+
+      document.getElementById('score-star').textContent = starScore + '점';
+      document.getElementById('desc-star').innerHTML = 
+        `<strong>${c1}</strong>의 감성적인 파장과 <strong>${c2}</strong>의 현실적인 직관이 우주적 주파수를 정확히 맞추었습니다.<br><br>` +
+        `데이트를 할 때도 서로가 좋아하는 코드가 착착 맞아떨어져 지루할 틈이 없습니다. 가치관의 결이 비슷해 미래를 그릴 때도 의견 충돌 없이 스무스하게 합의점을 찾는 별자리 조합입니다.`;
+
+      document.getElementById('score-blood').textContent = bloodScore + '점';
+      const bloodKey = `${b1}-${b2}`;
+      document.getElementById('desc-blood').innerHTML = 
+        `<strong>${b1}형(${name1})</strong>과 <strong>${b2}형(${name2})</strong>의 만남!<br>` +
+        (bloodDesc[bloodKey] || '서로 다른 매력이 시너지를 일으켜 예측불허의 짜릿한 연애를 즐길 수 있는 조합입니다.');
+
+      document.getElementById('desc-summary').innerHTML = 
+        `이름 획수부터 사주 기운, 우주 별자리, 혈액형 성향까지 종합해 볼 때 두 분은 서로에게 대체 불가능한 영감을 주는 특별한 인연입니다.<br>` +
+        `때로는 유쾌한 친구처럼, 때로는 든든한 동반자로서 서로의 우군이 되어준다면 세상에 두려울 것이 없는 무적의 커플이 될 것입니다!`;
+
+      document.getElementById('result').style.display = 'block';
+      document.getElementById('result').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function toggleBreakdown() {
+      const panel = document.getElementById('breakdown-panel');
+      if (panel.style.display === 'block') {
+        panel.style.display = 'none';
+      } else {
+        panel.style.display = 'block';
+      }
+    }
+
+    function resetForm() {
+      document.getElementById('result').style.display = 'none';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    const actionBtnRow = document.getElementById('action-btn-row');
+
+    async function captureArea() {
+      actionBtnRow.style.display = 'none';
+      const element = document.getElementById('capture-area');
+      try {
+        const canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+        return canvas.toDataURL('image/png');
+      } finally {
+        actionBtnRow.style.display = 'flex';
+      }
+    }
+
+    async function saveResult() {
+      const dataUrl = await captureArea();
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = 'AI_올인원_궁합_리포트.png';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    async function shareResult() {
+      const dataUrl = await captureArea();
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      const file = new File([blob], 'AI_올인원_궁합_리포트.png', { type: 'image/png' });
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            title: 'AI 올인원 궁합 분석 리포트',
+            text: '✨ 이름 획수 해부도부터 띠, 별자리, 혈액형까지 담은 우리의 궁합 결과를 공유합니다!',
+            files: [file]
+          });
+        } catch (err) {
+          if (err.name !== 'AbortError') console.log(err);
+        }
+      } else {
+        const a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = 'AI_올인원_궁합_리포트.png';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        alert("이 브라우저는 이미지 직접 공유를 지원하지 않아 이미지 파일로 저장되었습니다.");
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', initSelectors);
+  </script>
+</body>
+</html>
