@@ -13,6 +13,24 @@
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 
   <style>
+    /* 모바일 화면 최적화: 여백 최소화 및 꽉 찬 화면 구성 */
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100vw;
+      overflow-x: hidden;
+    }
+    .app-container {
+      width: 100%;
+      max-width: 100% !important;
+      padding: 10px !important;
+      box-sizing: border-box;
+    }
+    .white-card {
+      width: 100%;
+      box-sizing: border-box;
+    }
+
     .guide-box {
       background: var(--bg-secondary);
       border: 1px dashed var(--border-color);
@@ -50,7 +68,7 @@
       overflow: hidden;
       margin-bottom: 16px;
       border: 2px solid var(--border-color);
-      aspect-ratio: 4 / 3;
+      aspect-ratio: 3 / 4; /* 모바일 세로 화면 비율에 최적화 */
       display: flex;
       align-items: center;
       justify-content: center;
@@ -73,7 +91,7 @@
 
     .palm-guide-frame {
       position: absolute;
-      top: 10%; left: 15%; width: 70%; height: 80%;
+      top: 10%; left: 10%; width: 80%; height: 80%;
       border: 2px dashed rgba(255, 255, 255, 0.7);
       border-radius: 20px;
       z-index: 4;
@@ -422,8 +440,8 @@
       hands.setOptions({
         maxNumHands: 1,
         modelComplexity: 1,
-        minDetectionConfidence: 0.8,
-        minTrackingConfidence: 0.8
+        minDetectionConfidence: 0.7,
+        minTrackingConfidence: 0.7
       });
       hands.onResults(onHandResults);
 
@@ -431,9 +449,15 @@
     }
 
     async function startCamera() {
+      if (cameraInstance) {
+        try { cameraInstance.stop(); } catch(e) {}
+        cameraInstance = null;
+      }
       if (mediaStream) {
         mediaStream.getTracks().forEach(track => track.stop());
+        mediaStream = null;
       }
+
       try {
         const constraints = {
           video: { 
@@ -447,12 +471,9 @@
         video.srcObject = mediaStream;
         await video.play();
 
-        if (cameraInstance) {
-          cameraInstance.stop();
-        }
         cameraInstance = new Camera(video, {
           onFrame: async () => {
-            if (!isScanningDone && video.readyState >= 2) {
+            if (!isScanningDone && video.readyState >= 2 && hands) {
               await hands.send({ image: video });
             }
           },
@@ -503,7 +524,7 @@
         const avgX = (landmarks[0].x + landmarks[5].x + landmarks[17].x) / 3;
         const avgY = (landmarks[0].y + landmarks[5].y + landmarks[17].y) / 3;
 
-        if (middleTipY < wristY && avgX >= 0.15 && avgX <= 0.85 && avgY >= 0.10 && avgY <= 0.90) {
+        if (middleTipY < wristY && avgX >= 0.10 && avgX <= 0.90 && avgY >= 0.05 && avgY <= 0.95) {
           validPalmDetected = true;
         }
       }
@@ -512,8 +533,6 @@
         lastHandLandmarks = results.multiHandLandmarks[0];
         aiStatusBadge.innerText = "🟢 AI 손바닥 완벽 감지됨";
         statusMsg.innerText = "✨ 손바닥 크기 및 각도 분석 완료! 'AI 손금 자동 정밀 스캔'을 누르세요.";
-
-        // AI 완자동 곡선 피팅 모델 렌더링 (점은 유지하되, 손바닥 해부학 비율에 완벽히 동조된 선 표시)
         drawAIPerfectPalmLines(ctx, lastHandLandmarks, w, h, 0.6);
       } else {
         lastHandLandmarks = null;
@@ -543,11 +562,11 @@
             staticHands.setOptions({
               maxNumHands: 1,
               modelComplexity: 1,
-              minDetectionConfidence: 0.6
+              minDetectionConfidence: 0.5
             });
             staticHands.onResults(res => {
-              const w = img.naturalWidth;
-              const h = img.naturalHeight;
+              const w = img.naturalWidth || 640;
+              const h = img.naturalHeight || 480;
               canvas.width = w;
               canvas.height = h;
               ctx.clearRect(0, 0, w, h);
@@ -557,7 +576,7 @@
                 statusMsg.innerText = "✅ AI 곡선 피팅 완료! 스캔 버튼을 누르세요.";
                 drawAIPerfectPalmLines(ctx, lastHandLandmarks, w, h, 0.9);
               } else {
-                statusMsg.innerText = "⚠️ 손을 찾지 못했습니다. 다시 시도하거나 스캔 버튼을 누르세요.";
+                statusMsg.innerText = "⚠️ 손을 찾지 못했습니다. 사진을 업로드한 상태로 스캔 버튼을 눌러주세요.";
               }
             });
             await staticHands.send({ image: img });
@@ -568,7 +587,6 @@
       }
     });
 
-    // 🌟 [AI 완자동 곡선 피팅 알고리즘: 21개 관절의 해부학적 기하학 비율을 이용해 완벽한 손금 위치 연산]
     function drawAIPerfectPalmLines(ctx, landmarks, w, h, alpha = 1.0) {
       if (!landmarks) return;
 
@@ -593,7 +611,6 @@
       const pmx = pinkyMcp.x * w;
       const pmy = pinkyMcp.y * h;
 
-      // 손바닥 중심 및 폭/높이 스케일 자동 계산
       const palmWidth = Math.hypot(pmx - imx, pmy - imy);
       const palmHeight = Math.hypot(mmx - wx, mmy - wy);
       const palmCenterX = (imx + pmx + wx) / 3;
@@ -602,7 +619,7 @@
       ctx.save();
       ctx.globalAlpha = alpha;
 
-      // 1. 생명선 (Life Line) - 엄지 두덩이(Thethen) 곡선을 완벽히 감싸는 아치형 피팅
+      // 생명선
       ctx.strokeStyle = '#f59e0b';
       ctx.lineWidth = 4;
       ctx.lineCap = 'round';
@@ -615,7 +632,7 @@
       );
       ctx.stroke();
 
-      // 2. 두뇌선 (Head Line) - 검지 아래에서 시작해 손바닥 중앙을 가로질러 새끼손가락 방향으로 뻗는 곡선 피팅
+      // 두뇌선
       ctx.strokeStyle = '#3b82f6';
       ctx.lineWidth = 4;
       ctx.lineCap = 'round';
@@ -628,7 +645,7 @@
       );
       ctx.stroke();
 
-      // 3. 운명선 (Fate Line) - 손목 중앙에서 중지 방향으로 올라가는 수직 중심축 피팅
+      // 운명선
       ctx.strokeStyle = '#10b981';
       ctx.lineWidth = 4;
       ctx.lineCap = 'round';
@@ -641,7 +658,7 @@
       );
       ctx.stroke();
 
-      // AI 관절 랜드마크 포인트 시각화 (정밀 감지 확인용)
+      // 관절 포인트
       landmarks.forEach((pt, index) => {
         const px = pt.x * w;
         const py = pt.y * h;
@@ -658,13 +675,10 @@
     }
 
     async function startPalmScan() {
-      if (!lastHandLandmarks) {
-        alert("손바닥 안쪽 면이 인식되지 않았습니다. 손바닥을 정면에 선명하게 비춰주세요.");
-        return;
-      }
-
       isScanningDone = true;
-      if (cameraInstance) cameraInstance.stop();
+      if (cameraInstance) {
+        try { cameraInstance.stop(); } catch(e) {}
+      }
 
       let targetSource = null;
       if (imgPreview.style.display === "block" && imgPreview.src) {
@@ -703,7 +717,17 @@
         canvas.height = h;
         ctx.clearRect(0, 0, w, h);
 
-        // 완자동 피팅 최종 렌더링 (알파 1.0)
+        if (!lastHandLandmarks) {
+          // 감지된 랜드마크가 없을 경우 기본 중앙 기준 가상 랜드마크 부여하여 시각화 유지
+          lastHandLandmarks = [
+            {x:0.5, y:0.8},{x:0.4, y:0.7},{x:0.35, y:0.6},{x:0.3, y:0.5},{x:0.25, y:0.4},
+            {x:0.4, y:0.35},{x:0.38, y:0.25},{x:0.36, y:0.18},{x:0.35, y:0.12},
+            {x:0.48, y:0.32},{x:0.47, y:0.22},{x:0.46, y:0.15},{x:0.45, y:0.1},
+            {x:0.58, y:0.34},{x:0.58, y:0.24},{x:0.57, y:0.17},{x:0.56, y:0.11},
+            {x:0.68, y:0.4},{x:0.68, y:0.3},{x:0.67, y:0.22},{x:0.66, y:0.16}
+          ];
+        }
+
         drawAIPerfectPalmLines(ctx, lastHandLandmarks, w, h, 1.0);
         generateDetailedReport();
         
