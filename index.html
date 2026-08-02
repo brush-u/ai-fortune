@@ -1,951 +1,111 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>AI 정밀 관상</title>
-<meta name="theme-color" content="#F7F6F2">
-<script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@700;900&family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 토탈 운세 센터</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .hero {
+            text-align: center;
+            padding: 40px 0 30px;
+        }
+        .hero h1 { font-size: 1.8rem; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.5px; }
+        .hero p { color: var(--text-sub); font-size: 0.95rem; }
 
-:root{
-  --bg:#F7F6F2;
-  --card:#FFFFFF;
-  --card-2:#F3F2EC;
-  --border:#E4E1D7;
-  --text:#201E1A;
-  --text-soft:#6B6558;
-  --text-softer:#4A4740;
-  --gold:#B8860B;
-  --gold-bg:#F5E9C8;
-  --indigo:#4F46E5;
-  --purple:#9333EA;
-  --blue:#0284C7;
-  --amber:#B45309;
-  --pink:#DB2777;
-  --green-bg:#EAF7EF; --green-bd:#16A34A; --green-tx:#166534; --green-strong:#16A34A;
-  --red-bg:#FDEEEE; --red-bd:#DC2626; --red-tx:#991B1B; --red-strong:#DC2626;
-  --shadow: 0 16px 40px -20px rgba(32,30,26,0.18), 0 2px 8px rgba(32,30,26,0.05);
-}
-*{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-html,body{ margin:0; padding:0; width:100%; min-height:100dvh; background:var(--bg); color:var(--text); font-family:'Noto Sans KR',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; overflow-x:hidden; }
-body{ display:flex; flex-direction:column; align-items:center; padding:env(safe-area-inset-top,16px) env(safe-area-inset-right,12px) env(safe-area-inset-bottom,16px) env(safe-area-inset-left,12px); }
+        .menu-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        @media (min-width: 480px) {
+            .menu-grid { grid-template-columns: repeat(2, 1fr); }
+        }
 
-.container{ background:var(--card); padding:18px; border-radius:20px; box-shadow:var(--shadow); border:1px solid var(--border); max-width:460px; width:100%; margin:auto 0; }
+        .menu-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            text-decoration: none;
+            color: inherit;
+            position: relative;
+            box-shadow: var(--shadow-subtle);
+            transition: all 0.25s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .menu-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-hover);
+            border-color: #cbd5e1;
+        }
 
-.app-header{ display:flex; align-items:center; justify-content:center; gap:9px; margin-bottom:4px; }
-.app-header svg{ width:30px; height:30px; }
-h1{ font-family:'Noto Serif KR',serif; font-size:1.4rem; font-weight:900; color:var(--gold); }
-p.desc{ font-size:0.82rem; color:var(--text-soft); text-align:center; margin-bottom:12px; line-height:1.65; }
+        .menu-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 6px; }
+        .menu-card p { font-size: 0.82rem; color: var(--text-sub); line-height: 1.4; margin-bottom: 20px; }
 
-.guide-box{ background:var(--card-2); border:1px dashed var(--indigo); border-radius:10px; padding:10px 12px; margin-bottom:12px; font-size:0.76rem; line-height:1.55; }
-.guide-box .guide-title{ color:var(--gold); font-weight:bold; margin-bottom:3px; }
-.guide-box ul{ list-style:none; padding:0; margin:0; }
-.good{ color:var(--green-strong); font-weight:bold; }
-.bad{ color:var(--red-strong); font-weight:bold; }
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--accent-color);
+        }
 
-/* ---- choice shown directly on the first screen ---- */
-#uploadBlock{ margin-bottom:12px; }
-
-.choice-row{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-@keyframes choiceIn{ from{ opacity:0; transform:translateY(6px);} to{ opacity:1; transform:translateY(0);} }
-@keyframes choiceIn{ from{ opacity:0; transform:translateY(6px);} to{ opacity:1; transform:translateY(0);} }
-.choice-tile{ border:1px solid var(--border); border-radius:14px; padding:22px 10px; text-align:center; cursor:pointer; background:var(--card-2); transition:transform 0.18s ease, border-color 0.18s ease; }
-.choice-tile:hover{ transform:translateY(-3px); border-color:var(--indigo); }
-.choice-tile .icon{ font-size:30px; margin-bottom:6px; }
-.choice-tile strong{ display:block; font-size:1rem; color:var(--text); margin-bottom:4px; }
-.choice-tile span{ font-size:0.78rem; color:var(--text-soft); }
-#fileInput{ display:none; }
-
-.camera-wrap{ display:none; text-align:center; margin-bottom:12px; }
-#camVideo{ width:100%; border-radius:12px; background:#000; border:2px solid var(--border); }
-.cam-actions{ margin-top:10px; display:flex; gap:8px; justify-content:center; }
-
-.status-msg{ background:var(--border); color:var(--text); padding:9px 10px; border-radius:8px; font-size:0.8rem; margin-bottom:10px; font-weight:bold; min-height:20px; display:none; align-items:center; justify-content:center; text-align:center; line-height:1.4; gap:6px; }
-.status-msg .sub{ display:block; font-weight:500; font-size:0.7rem; color:var(--text-softer); margin-top:2px; }
-.status-dots{ display:flex; gap:5px; margin-left:2px; }
-.status-dots span{ width:5px; height:5px; border-radius:50%; background:var(--gold); opacity:0.3; animation:dotPulse 1.2s ease-in-out infinite; }
-.status-dots span:nth-child(2){ animation-delay:0.2s; } .status-dots span:nth-child(3){ animation-delay:0.4s; }
-@keyframes dotPulse{ 0%,100%{ opacity:0.3; transform:scale(1);} 50%{ opacity:1; transform:scale(1.3);} }
-
-.video-wrapper{ position:relative; width:100%; background:#000; border-radius:12px; overflow:hidden; margin-bottom:10px; border:2px solid var(--border); display:none; }
-#faceCanvas{ display:block; width:100%; height:auto; }
-.scan-close{ position:absolute; top:8px; right:8px; width:32px; height:32px; border-radius:50%; background:rgba(15,23,42,0.65); color:#fff; border:1px solid rgba(255,255,255,0.25); font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:20; }
-.scan-close:hover{ background:rgba(15,23,42,0.85); }
-
-.scan-line{ position:absolute; top:0; left:0; width:100%; height:4px; background:linear-gradient(90deg, transparent, #ef4444, var(--gold), #ef4444, transparent); box-shadow:0 0 15px #ef4444, 0 0 22px var(--gold); opacity:0; pointer-events:none; }
-.scan-line.active{ opacity:1; animation:scanMove 2.4s linear infinite; }
-@keyframes scanMove{ 0%{ top:0%; } 50%{ top:92%; } 100%{ top:0%; } }
-.scan-grid{ position:absolute; inset:0; opacity:0; pointer-events:none; background-image:linear-gradient(rgba(148,163,184,0.14) 1px, transparent 1px), linear-gradient(90deg, rgba(148,163,184,0.14) 1px, transparent 1px); background-size:24px 24px; transition:opacity 0.3s ease; }
-.scan-grid.active{ opacity:1; }
-
-.error-box{ display:none; background:#7f1d1d; border:1px solid #ef4444; color:#fecaca; padding:10px 12px; border-radius:8px; font-size:0.78rem; margin-bottom:10px; line-height:1.5; text-align:left; }
-.error-box button{ margin-top:8px; }
-
-.mole-panel{ display:none; margin:0 0 10px; padding:12px 14px; border:1px dashed var(--gold); border-radius:10px; background:rgba(250,204,21,0.06); }
-.mole-panel p{ font-size:0.76rem; color:var(--text-softer); margin:0 0 8px; line-height:1.55; }
-.mole-list{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
-.mole-chip{ font-size:0.72rem; background:var(--pink); color:#fff; padding:4px 10px; border-radius:20px; display:flex; align-items:center; gap:6px; }
-.mole-chip button{ background:none; border:none; color:#fff; cursor:pointer; font-weight:900; padding:0; font-size:13px; }
-
-.main-btn{ background:linear-gradient(135deg, var(--indigo), var(--purple)); color:#fff; border:none; padding:13px; font-size:0.92rem; font-weight:bold; border-radius:10px; cursor:pointer; width:100%; box-shadow:0 4px 10px -2px rgba(99,102,241,0.5); }
-.main-btn:disabled{ opacity:0.5; cursor:not-allowed; }
-.ghost-btn{ background:transparent; border:1px solid var(--border); color:var(--text-soft); padding:10px; font-size:0.85rem; border-radius:9px; width:100%; cursor:pointer; margin-top:8px; }
-
-.retry-link{ display:block; text-align:center; font-size:0.74rem; color:var(--text-soft); text-decoration:underline; text-underline-offset:3px; cursor:pointer; margin-bottom:10px; }
-.retry-link:hover{ color:var(--gold); }
-
-/* ---- result ---- */
-#result{ display:none; margin-top:10px; background:var(--card-2); border:1px solid var(--border); border-radius:14px; padding:16px 14px; }
-#result h2{ font-family:'Noto Serif KR',serif; color:var(--gold); font-size:1.3rem; text-align:center; border-bottom:1px solid var(--border); padding-bottom:10px; margin-bottom:14px; }
-
-.profile-bar{ display:flex; justify-content:space-around; background:#EFEAFB; border:1px solid #DDD3F5; padding:12px; border-radius:10px; margin-bottom:14px; }
-.profile-item{ text-align:center; flex:1; }
-.profile-item .label{ font-size:0.78rem; color:var(--purple); display:block; font-weight:600; }
-.profile-item .val{ font-size:1.15rem; font-weight:bold; color:var(--text); margin-top:4px; }
-
-.ratios{ display:flex; justify-content:space-between; margin-bottom:14px; background:var(--card); padding:12px; border-radius:10px; font-size:0.88rem; border:1px solid var(--border); }
-.ratios div{ text-align:center; flex:1; }
-.ratios span{ display:block; font-weight:bold; font-size:1.25rem; color:var(--blue); margin-top:4px; }
-
-.detail-section{ background:var(--card); padding:14px; border-radius:10px; margin-bottom:12px; border-left:4px solid var(--indigo); }
-.detail-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; gap:8px; flex-wrap:wrap; }
-.detail-section h4{ color:var(--gold); font-size:1.08rem; }
-.detail-tag{ font-size:0.8rem; font-weight:700; color:#fff; background:var(--pink); padding:3px 11px; border-radius:20px; white-space:nowrap; }
-.shape-desc{ background:var(--card-2); padding:9px 11px; border-radius:7px; font-size:0.92rem; color:var(--blue); margin-bottom:10px; border:1px solid var(--border); font-weight:500; line-height:1.5; }
-.analysis-grid{ display:flex; flex-direction:column; gap:9px; }
-.good-box{ background:var(--green-bg); border:1px solid var(--green-bd); padding:11px 12px; border-radius:7px; font-size:0.96rem; line-height:1.65; color:var(--green-tx); }
-.good-box strong{ color:var(--green-strong); display:block; margin-bottom:5px; font-size:0.94rem; }
-.bad-box{ background:var(--red-bg); border:1px solid var(--red-bd); padding:11px 12px; border-radius:7px; font-size:0.96rem; line-height:1.65; color:var(--red-tx); }
-.bad-box strong{ color:var(--red-strong); display:block; margin-bottom:5px; font-size:0.94rem; }
-
-.fortune-section{ margin-top:16px; }
-.fortune-section h3{ color:var(--gold); font-size:1.1rem; margin-bottom:12px; text-align:center; }
-.fortune-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-.fortune-card{ background:var(--card); border:1px solid var(--border); border-radius:10px; padding:13px; }
-.fortune-card .fname{ display:flex; justify-content:space-between; font-size:1rem; font-weight:bold; color:var(--text); margin-bottom:9px; }
-.fortune-card .fname .score{ color:var(--gold); }
-.gauge-track{ height:9px; background:var(--card-2); border-radius:6px; overflow:hidden; margin-bottom:9px; border:1px solid var(--border); }
-.gauge-fill{ height:100%; border-radius:6px; width:0%; transition:width 1.1s cubic-bezier(.2,.9,.25,1); background:linear-gradient(90deg,#ef4444,var(--gold)); }
-.fortune-card p{ font-size:0.88rem; line-height:1.6; color:var(--text-softer); margin:0; }
-
-.summary-box{ margin-top:14px; padding-top:12px; border-top:1px dashed var(--border); }
-.summary-box h4{ color:var(--purple); font-size:1.02rem; margin-bottom:8px; }
-.summary-box p{ font-size:0.92rem; line-height:1.7; color:var(--text-softer); }
-
-.share-action-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:16px; padding-top:14px; border-top:1px dashed var(--border); }
-.share-btn2{ padding:13px; border-radius:9px; font-size:0.9rem; font-weight:bold; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px; transition:transform 0.15s ease; }
-.share-btn2:hover{ transform:translateY(-1px); }
-.share-btn2:disabled{ opacity:0.6; cursor:wait; transform:none; }
-.btn-save{ background:var(--border); color:var(--text); }
-.btn-share{ background:var(--gold); color:#fff; }
-
-.disclaimer{ text-align:center; font-size:0.68rem; color:var(--text-soft); opacity:0.8; margin-top:14px; line-height:1.7; }
-@media (prefers-reduced-motion: reduce){ .gauge-fill{ transition:none; } .scan-line.active{ animation:none; opacity:0.7; top:50%; } }
-</style>
+        .badge {
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px;
+        }
+        .badge-indigo { background: #e0e7ff; color: #4338ca; }
+        .badge-emerald { background: #d1fae5; color: #047857; }
+        .badge-amber { background: #fef3c7; color: #b45309; }
+        .badge-purple { background: #f3e8ff; color: #6b21a8; }
+    </style>
 </head>
 <body>
 
-<div class="container" id="captureContainer">
-  <div class="app-header">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-      <circle cx="50" cy="50" r="42" fill="#1e1b4b" stroke="#facc15" stroke-width="3" stroke-dasharray="6 3"/>
-      <path d="M 20 50 Q 50 20 80 50 Q 50 80 20 50 Z" fill="#0f172a" stroke="#38bdf8" stroke-width="4"/>
-      <circle cx="50" cy="50" r="12" fill="#facc15"/>
-      <circle cx="50" cy="50" r="6" fill="#0f172a"/>
-      <circle cx="52" cy="48" r="2" fill="#ffffff"/>
-    </svg>
-    <h1>AI 정밀 관상</h1>
-  </div>
-  <p class="desc">사진 한 장을 자동으로 스캔해 이목구비에 점을 찍고 선으로 연결한 뒤,<br>전통 관상학 용어로 부위별 특징과 총운까지 풀어드려요.</p>
+    <nav class="app-nav">
+        <a href="index.html" class="nav-brand">🔮 AI 운세 센터</a>
+    </nav>
 
-  <div class="guide-box">
-    <div class="guide-title">📌 촬영 가이드</div>
-    <ul>
-      <li><span class="good">[권장]</span> 정면 시선, 밝은 조명, 이마부터 턱까지 나온 사진</li>
-      <li><span class="bad">[주의]</span> 안경·마스크·모자 착용, 과도한 보정 필터, 어두운 사진</li>
-    </ul>
-  </div>
-
-  <div id="uploadBlock">
-    <div class="choice-row" id="choiceRow">
-      <div class="choice-tile" id="choosePick">
-        <div class="icon">🖼️</div>
-        <strong>앨범에서 선택</strong>
-        <span>가지고 있는 사진 올리기</span>
-      </div>
-      <div class="choice-tile" id="chooseCam">
-        <div class="icon">📷</div>
-        <strong>카메라로 촬영</strong>
-        <span>지금 바로 얼굴 찍기</span>
-      </div>
-    </div>
-    <input type="file" id="fileInput" accept="image/*">
-  </div>
-
-  <div class="camera-wrap" id="cameraWrap">
-    <video id="camVideo" autoplay playsinline muted></video>
-    <div class="cam-actions">
-      <button class="main-btn" id="camShotBtn" style="width:auto; flex:1;">📸 촬영하기</button>
-      <button class="ghost-btn" id="camCancelBtn" style="width:auto; flex:1; margin-top:0;">취소</button>
-    </div>
-  </div>
-
-  <div class="status-msg" id="scanStatus">
-    <div>
-      <span id="scanLabel">얼굴 스캔 중</span><span class="status-dots"><span></span><span></span><span></span></span>
-      <span class="sub" id="scanSub">부위별 위치를 자동으로 인식하고 있어요</span>
-    </div>
-  </div>
-
-  <div class="video-wrapper" id="scanWrap">
-    <canvas id="faceCanvas"></canvas>
-    <div class="scan-grid" id="scanGrid"></div>
-    <div class="scan-line" id="laser"></div>
-    <button class="scan-close" id="scanCloseBtn" title="다시 촬영·선택하기">✕</button>
-  </div>
-
-  <div class="error-box" id="errorBox">
-    <span id="errorText">⚠️ 얼굴을 인식하지 못했어요. 더 밝고 정면을 향한 사진으로 다시 시도해주세요.</span>
-    <button class="ghost-btn" id="retryBtn">다시 시도하기</button>
-  </div>
-
-  <div class="mole-panel" id="molePanel">
-    <p><b>얼굴에 점(모반)이 있나요?</b> 있는 위치를 사진 위에서 눌러 표시해주세요. 없다면 그냥 완료를 눌러주세요.</p>
-    <div class="mole-list" id="moleList"></div>
-    <button class="main-btn" id="moleDoneBtn">점 표시 완료 / 없음</button>
-  </div>
-
-  <div id="result">
-    <h2>📊 나의 AI 정밀 관상 리포트</h2>
-    <span class="retry-link" id="retryLink">🔄 다시 찍기</span>
-
-    <div class="profile-bar">
-      <div class="profile-item"><span class="label">얼굴형</span><span class="val" id="pFaceType">-</span></div>
-      <div class="profile-item"><span class="label">대칭</span><span class="val" id="pSym">-</span></div>
-      <div class="profile-item"><span class="label">총운 평균</span><span class="val" id="pAvg">-</span></div>
-    </div>
-
-    <div class="ratios">
-      <div>상정 (초년·지혜)<span id="rTop">-</span></div>
-      <div>중정 (중년·재물)<span id="rMid">-</span></div>
-      <div>하정 (말년·인복)<span id="rBot">-</span></div>
-    </div>
-
-    <div id="detailsContainer"></div>
-
-    <div class="fortune-section">
-      <h3>💫 토탈 운세</h3>
-      <div class="fortune-grid">
-        <div class="fortune-card">
-          <div class="fname">연애운 <span class="score" id="loveScore">-</span></div>
-          <div class="gauge-track"><div class="gauge-fill" id="loveGauge"></div></div>
-          <p id="loveText"></p>
+    <div class="app-container">
+        <div class="hero">
+            <h1>어떤 운세를 확인하시겠어요?</h1>
+            <p>인공지능 비전과 정통 명리로 풀어보는 나만의 운세</p>
         </div>
-        <div class="fortune-card">
-          <div class="fname">금전운 <span class="score" id="moneyScore">-</span></div>
-          <div class="gauge-track"><div class="gauge-fill" id="moneyGauge"></div></div>
-          <p id="moneyText"></p>
-        </div>
-        <div class="fortune-card">
-          <div class="fname">직업운 <span class="score" id="careerScore">-</span></div>
-          <div class="gauge-track"><div class="gauge-fill" id="careerGauge"></div></div>
-          <p id="careerText"></p>
-        </div>
-        <div class="fortune-card">
-          <div class="fname">인간관계운 <span class="score" id="relScore">-</span></div>
-          <div class="gauge-track"><div class="gauge-fill" id="relGauge"></div></div>
-          <p id="relText"></p>
-        </div>
-      </div>
+
+        <div class="menu-grid" id="menuGrid"></div>
     </div>
 
-    <div class="summary-box">
-      <h4>💡 관상 총평 및 오늘의 한마디</h4>
-      <p id="quoteText"></p>
-      <p style="margin-top:8px; opacity:0.75;">이 리포트는 오직 즐거움을 위해 만들어졌습니다. 실제 성격과 운은 당신이 매일 쌓아가는 선택에 달려 있어요.</p>
-    </div>
-
-    <div class="share-action-grid">
-      <button class="share-btn2 btn-save" id="saveBtn">💾 사진 앱에 저장</button>
-      <button class="share-btn2 btn-share" id="shareBtn">💛 결과 공유하기</button>
-    </div>
-  </div>
-
-  <div class="disclaimer">
-    관상학적 표현을 차용한 오락 콘텐츠입니다. 의학적·과학적 진단이 아니며,<br>
-    새로 생기거나 변하는 점은 재미와 별개로 피부과에서 확인해보는 것을 권해요.<br>
-    사진은 브라우저 안에서만 처리되고 서버로 전송되지 않습니다.
-  </div>
-</div>
-
-<script>
-(async function(){
-  const choiceRow = document.getElementById('choiceRow');
-  const choosePick = document.getElementById('choosePick');
-  const chooseCam = document.getElementById('chooseCam');
-  const fileInput = document.getElementById('fileInput');
-
-  const cameraWrap = document.getElementById('cameraWrap');
-  const camVideo = document.getElementById('camVideo');
-  const camShotBtn = document.getElementById('camShotBtn');
-  const camCancelBtn = document.getElementById('camCancelBtn');
-
-  const scanStatus = document.getElementById('scanStatus');
-  const scanLabel = document.getElementById('scanLabel');
-  const scanSub = document.getElementById('scanSub');
-  const scanWrap = document.getElementById('scanWrap');
-  const laser = document.getElementById('laser');
-  const scanGrid = document.getElementById('scanGrid');
-  const scanCloseBtn = document.getElementById('scanCloseBtn');
-  const errorBox = document.getElementById('errorBox');
-  const errorText = document.getElementById('errorText');
-  const retryBtn = document.getElementById('retryBtn');
-
-  const molePanel = document.getElementById('molePanel');
-  const moleList = document.getElementById('moleList');
-  const moleDoneBtn = document.getElementById('moleDoneBtn');
-
-  const canvas = document.getElementById('faceCanvas');
-  const ctx = canvas.getContext('2d', { willReadFrequently: true });
-  const resultEl = document.getElementById('result');
-  const retryLink = document.getElementById('retryLink');
-  const saveBtn = document.getElementById('saveBtn');
-  const shareBtn = document.getElementById('shareBtn');
-  const captureContainer = document.getElementById('captureContainer');
-
-  let img = new Image();
-  let cw = 0, ch = 0;
-  let camStream = null;
-  let points = {};
-  let moles = [];
-  let mode = 'idle';
-  let draggingMole = -1;
-  let modelsLoading = null;
-
-  const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
-
-  function loadModels(){
-    if(modelsLoading) return modelsLoading;
-    modelsLoading = Promise.all([
-      faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-      faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL)
-    ]);
-    return modelsLoading;
-  }
-  loadModels().catch(()=>{ /* handled at scan time */ });
-
-  function delay(ms){ return new Promise(r => setTimeout(r, ms)); }
-
-  // ---------- direct choice: album or camera ----------
-  choosePick.addEventListener('click', () => { fileInput.click(); });
-  chooseCam.addEventListener('click', () => { openCamera(); });
-
-  async function openCamera(){
-    if(chooseCam.dataset.busy === '1') return;
-    chooseCam.dataset.busy = '1';
-    try{
-      camStream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user' } });
-      camVideo.srcObject = camStream;
-      cameraWrap.style.display = 'block';
-      document.getElementById('uploadBlock').style.display = 'none';
-    }catch(err){
-      alert('카메라를 사용할 수 없어요. 앨범에서 사진을 선택해주세요.');
-      document.getElementById('uploadBlock').style.display = 'block';
-    }finally{
-      chooseCam.dataset.busy = '0';
-    }
-  }
-
-  fileInput.addEventListener('change', e => { if(e.target.files && e.target.files[0]) loadFile(e.target.files[0]); });
-
-  camCancelBtn.addEventListener('click', () => { stopCamera(); document.getElementById('uploadBlock').style.display='block'; });
-  camShotBtn.addEventListener('click', () => {
-    if(camShotBtn.disabled) return;
-    camShotBtn.disabled = true;
-    const tmp = document.createElement('canvas');
-    tmp.width = camVideo.videoWidth; tmp.height = camVideo.videoHeight;
-    tmp.getContext('2d').drawImage(camVideo,0,0);
-    const dataUrl = tmp.toDataURL('image/png');
-    stopCamera();
-    img = new Image();
-    img.onload = () => { camShotBtn.disabled = false; startScan(); };
-    img.src = dataUrl;
-  });
-  function stopCamera(){
-    if(camStream){ camStream.getTracks().forEach(t=>t.stop()); camStream = null; }
-    cameraWrap.style.display = 'none';
-  }
-
-  function loadFile(file){
-    if(!file.type.startsWith('image/')) return;
-    const reader = new FileReader();
-    reader.onload = ev => {
-      img = new Image();
-      img.onload = () => { startScan(); };
-      img.src = ev.target.result;
-    };
-    reader.readAsDataURL(file);
-  }
-
-  // ---------- go back to the start screen ----------
-  function goToStart(){
-    if(camStream){ camStream.getTracks().forEach(t=>t.stop()); camStream = null; }
-    cameraWrap.style.display = 'none';
-    molePanel.style.display = 'none';
-    scanWrap.style.display = 'none';
-    scanStatus.style.display = 'none';
-    errorBox.style.display = 'none';
-    resultEl.style.display = 'none';
-    laser.classList.remove('active');
-    scanGrid.classList.remove('active');
-    document.getElementById('uploadBlock').style.display = 'block';
-    fileInput.value = '';
-  }
-
-  retryBtn.addEventListener('click', () => { errorBox.style.display='none'; goToStart(); });
-  scanCloseBtn.addEventListener('click', () => { points = {}; moles = []; mode = 'idle'; moleList.innerHTML=''; goToStart(); });
-  retryLink.addEventListener('click', () => {
-    if(!img || !img.src) return;
-    points = {}; moles = []; mode = 'idle'; moleList.innerHTML = '';
-    resultEl.style.display = 'none';
-    startScan(true);
-  });
-
-  // ---------- scan pipeline ----------
-  async function startScan(scrollToView){
-    document.getElementById('uploadBlock').style.display = 'none';
-    errorBox.style.display = 'none';
-    resultEl.style.display = 'none';
-    molePanel.style.display = 'none';
-    points = {}; moles = [];
-
-    const maxW = 520;
-    const scale = Math.min(1, maxW / img.naturalWidth);
-    cw = Math.round(img.naturalWidth * scale);
-    ch = Math.round(img.naturalHeight * scale);
-    canvas.width = cw; canvas.height = ch;
-    ctx.clearRect(0,0,cw,ch);
-    ctx.drawImage(img,0,0,cw,ch);
-
-    scanWrap.style.display = 'block';
-    scanStatus.style.display = 'flex';
-    if(scrollToView) scanWrap.scrollIntoView({ behavior:'smooth', block:'start' });
-    scanLabel.textContent = '모델을 불러오는 중';
-    scanSub.textContent = '처음 실행 시 몇 초 정도 걸릴 수 있어요';
-    laser.classList.add('active');
-    scanGrid.classList.add('active');
-
-    try{
-      const detectionPromise = (async () => {
-        await loadModels();
-        return faceapi
-          .detectSingleFace(canvas, new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.4 }))
-          .withFaceLandmarks();
-      })();
-
-      scanLabel.textContent = '얼굴 스캔 중';
-      scanSub.textContent = '이목구비 위치를 하나씩 확인하고 있어요';
-
-      const [detection] = await Promise.all([ detectionPromise, delay(3200) ]);
-      if(!detection){ throw new Error('no-face'); }
-
-      buildPointsFromLandmarks(detection);
-
-      scanLabel.textContent = '부위를 선으로 연결하는 중';
-      scanSub.textContent = '얼굴 윤곽과 이목구비를 이어보고 있어요';
-      await revealConnections();
-
-      laser.classList.remove('active');
-      scanGrid.classList.remove('active');
-      scanLabel.textContent = '인식 완료';
-      scanSub.textContent = '부위별 점과 연결선을 표시했어요';
-      await delay(650);
-      scanStatus.style.display = 'none';
-      startMolePhase();
-    }catch(err){
-      laser.classList.remove('active');
-      scanGrid.classList.remove('active');
-      scanStatus.style.display = 'none';
-      scanWrap.style.display = 'none';
-      errorText.textContent = '⚠️ 얼굴을 인식하지 못했어요. 조명이 밝고 얼굴이 크게 나온 정면 사진으로 다시 시도해주세요.';
-      errorBox.style.display = 'block';
-    }
-  }
-
-  function buildPointsFromLandmarks(detection){
-    const lm = detection.landmarks;
-    const jaw = lm.getJawOutline();
-    const leftEyeBrowRaw = lm.getLeftEyeBrow();
-    const rightEyeBrowRaw = lm.getRightEyeBrow();
-    const leftEyeRaw = lm.getLeftEye();
-    const rightEyeRaw = lm.getRightEye();
-    const noseRaw = lm.getNose();
-    const mouthRaw = lm.getMouth();
-
-    const avgPt = arr => ({ x: arr.reduce((s,p)=>s+p.x,0)/arr.length, y: arr.reduce((s,p)=>s+p.y,0)/arr.length });
-
-    const face_l = jaw[0].x < jaw[16].x ? jaw[0] : jaw[16];
-    const face_r = jaw[0].x < jaw[16].x ? jaw[16] : jaw[0];
-    const chin = jaw[8];
-
-    const eyeA = avgPt(leftEyeRaw), eyeB = avgPt(rightEyeRaw);
-    const eye_l = eyeA.x < eyeB.x ? eyeA : eyeB;
-    const eye_r = eyeA.x < eyeB.x ? eyeB : eyeA;
-
-    const browCenterX = (avgPt(leftEyeBrowRaw).x + avgPt(rightEyeBrowRaw).x)/2;
-    function innerBrowPoint(arr){
-      let best = arr[0], bestD = Infinity;
-      arr.forEach(p => { const d = Math.abs(p.x-browCenterX); if(d<bestD){bestD=d; best=p;} });
-      return best;
-    }
-    const browA = innerBrowPoint(leftEyeBrowRaw), browB = innerBrowPoint(rightEyeBrowRaw);
-    const eyebrow_l = browA.x < browB.x ? browA : browB;
-    const eyebrow_r = browA.x < browB.x ? browB : browA;
-
-    let nose_l = noseRaw[0], nose_r = noseRaw[0], nose_tip = noseRaw[0];
-    noseRaw.forEach(p => {
-      if(p.x < nose_l.x) nose_l = p;
-      if(p.x > nose_r.x) nose_r = p;
-      if(p.y > nose_tip.y) nose_tip = p;
-    });
-
-    const outerMouth = mouthRaw.slice(0, Math.min(12, mouthRaw.length));
-    let mouth_l = outerMouth[0], mouth_r = outerMouth[0];
-    outerMouth.forEach(p => { if(p.x < mouth_l.x) mouth_l = p; if(p.x > mouth_r.x) mouth_r = p; });
-
-    const browAvgY = (eyebrow_l.y + eyebrow_r.y)/2;
-    const box = detection.detection.box;
-    let forehead_top_y = Math.min(box.y, browAvgY - (chin.y - browAvgY) * 0.42);
-    forehead_top_y = Math.max(2, forehead_top_y);
-    const forehead_top = { x:(face_l.x+face_r.x)/2, y: forehead_top_y };
-    const forehead_center = { x:(face_l.x+face_r.x)/2, y: (forehead_top_y + browAvgY)/2 };
-
-    points = {
-      forehead_top, forehead_center,
-      eyebrow_l, eyebrow_r,
-      eye_l, eye_r,
-      nose_tip, nose_l, nose_r,
-      mouth_l, mouth_r,
-      chin, face_l, face_r,
-      jaw_l: jaw[0].x < jaw[16].x ? jaw[0] : jaw[16],
-      jaw_r: jaw[0].x < jaw[16].x ? jaw[16] : jaw[0]
-    };
-  }
-
-  // ---------- drawing: points + connecting lines, revealed progressively ----------
-  const CONNECTION_STAGES = [
-    { pairs:[['forehead_top','face_r'],['face_r','chin'],['chin','face_l'],['face_l','forehead_top']], color:'rgba(56,189,248,0.6)', width:1.6, dash:[6,4] },
-    { pairs:[['eyebrow_l','eyebrow_r']], color:'rgba(250,204,21,0.85)', width:1.8, dash:[] },
-    { pairs:[['eye_l','eye_r']], color:'rgba(56,189,248,0.8)', width:1.8, dash:[] },
-    { pairs:[['nose_l','nose_tip'],['nose_tip','nose_r']], color:'rgba(239,68,68,0.8)', width:1.8, dash:[] },
-    { pairs:[['mouth_l','mouth_r']], color:'rgba(236,72,153,0.8)', width:1.8, dash:[] },
-    { pairs:[['eyebrow_l','eye_l'],['eyebrow_r','eye_r'],['eye_l','nose_l'],['eye_r','nose_r'],['nose_l','mouth_l'],['nose_r','mouth_r'],['forehead_top','forehead_center'],['forehead_center','nose_tip'],['nose_tip','chin']], color:'rgba(168,85,247,0.5)', width:1.2, dash:[3,3] }
-  ];
-  let revealedStages = 0;
-
-  function redrawBase(){ ctx.clearRect(0,0,cw,ch); ctx.drawImage(img,0,0,cw,ch); }
-
-  function drawStages(uptoIndex){
-    redrawBase();
-    for(let i=0; i<=uptoIndex && i<CONNECTION_STAGES.length; i++){
-      const stage = CONNECTION_STAGES[i];
-      ctx.save();
-      ctx.strokeStyle = stage.color; ctx.lineWidth = stage.width; ctx.setLineDash(stage.dash);
-      stage.pairs.forEach(([a,b]) => {
-        if(!points[a] || !points[b]) return;
-        ctx.beginPath(); ctx.moveTo(points[a].x, points[a].y); ctx.lineTo(points[b].x, points[b].y); ctx.stroke();
-      });
-      ctx.restore();
-    }
-    Object.keys(points).forEach(k => {
-      if(k==='jaw_l' || k==='jaw_r') return;
-      drawMarker(points[k].x, points[k].y, '#38bdf8', false);
-    });
-    moles.forEach(m => drawMarker(m.x, m.y, '#facc15', true));
-  }
-
-  async function revealConnections(){
-    for(let i=0; i<CONNECTION_STAGES.length; i++){ drawStages(i); await delay(230); }
-    revealedStages = CONNECTION_STAGES.length - 1;
-  }
-  function drawAll(){ drawStages(revealedStages); }
-
-  function drawMarker(x,y,color,isMole){
-    ctx.save();
-    ctx.beginPath(); ctx.arc(x,y, isMole?7:5, 0, Math.PI*2);
-    ctx.fillStyle = color; ctx.globalAlpha = 0.92; ctx.fill();
-    ctx.lineWidth = 1.6; ctx.strokeStyle = '#0f172a'; ctx.stroke();
-    ctx.restore();
-  }
-
-  // ---------- mole marking (manual, optional) ----------
-  function startMolePhase(){ mode = 'mole'; scanWrap.style.display = 'block'; molePanel.style.display = 'block'; }
-  canvas.addEventListener('mousedown', onCanvasDown);
-  canvas.addEventListener('touchstart', onCanvasDown, {passive:false});
-  canvas.addEventListener('mousemove', onCanvasMove);
-  canvas.addEventListener('touchmove', onCanvasMove, {passive:false});
-  window.addEventListener('mouseup', ()=>{ draggingMole = -1; });
-  window.addEventListener('touchend', ()=>{ draggingMole = -1; });
-
-  function getCanvasPos(e){
-    const rect = canvas.getBoundingClientRect();
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    return { x:(clientX-rect.left)*(cw/rect.width), y:(clientY-rect.top)*(ch/rect.height) };
-  }
-  function onCanvasDown(e){
-    if(mode !== 'mole') return;
-    e.preventDefault();
-    const pos = getCanvasPos(e);
-    let idx = -1, bestD = 18*18;
-    moles.forEach((m,i)=>{ const d=(m.x-pos.x)**2+(m.y-pos.y)**2; if(d<bestD){bestD=d; idx=i;} });
-    if(idx>=0){ draggingMole = idx; return; }
-    const zone = classifyMoleZone(pos);
-    moles.push({ x:pos.x, y:pos.y, zone });
-    renderMoleChips();
-    drawAll();
-  }
-  function onCanvasMove(e){
-    if(mode !== 'mole' || draggingMole < 0) return;
-    e.preventDefault();
-    const pos = getCanvasPos(e);
-    moles[draggingMole].x = pos.x; moles[draggingMole].y = pos.y;
-    drawAll();
-  }
-  function renderMoleChips(){
-    moleList.innerHTML = '';
-    moles.forEach((m,i) => {
-      const chip = document.createElement('div');
-      chip.className = 'mole-chip';
-      chip.innerHTML = '<span>'+m.zone+'</span>';
-      const btn = document.createElement('button');
-      btn.textContent = '×';
-      btn.addEventListener('click', () => { moles.splice(i,1); renderMoleChips(); drawAll(); });
-      chip.appendChild(btn);
-      moleList.appendChild(chip);
-    });
-  }
-  moleDoneBtn.addEventListener('click', () => { molePanel.style.display = 'none'; mode = 'ready'; runAnalysis(); });
-
-  function classifyMoleZone(pt){
-    const fY = points.forehead_top.y;
-    const bY = (points.eyebrow_l.y + points.eyebrow_r.y)/2;
-    const eY = (points.eye_l.y + points.eye_r.y)/2;
-    const nY = points.nose_tip.y;
-    const mY = (points.mouth_l.y + points.mouth_r.y)/2;
-    const cY = points.chin.y;
-    const noseSpanL = Math.min(points.nose_l.x, points.nose_r.x) - 10;
-    const noseSpanR = Math.max(points.nose_l.x, points.nose_r.x) + 10;
-    const mouthSpanL = Math.min(points.mouth_l.x, points.mouth_r.x) - 6;
-    const mouthSpanR = Math.max(points.mouth_l.x, points.mouth_r.x) + 6;
-    const noseUpperBound = eY + (nY-eY)*0.35;
-    const noseLowerBound = nY + (mY-nY)*0.4;
-    const mouthLowerBound = mY + (cY-mY)*0.4;
-
-    if(pt.y < bY - (bY-fY)*0.1) return '이마';
-    if(pt.y < noseUpperBound) return '눈가';
-    if(pt.y < noseLowerBound){ return (pt.x >= noseSpanL && pt.x <= noseSpanR) ? '코' : '뺨'; }
-    if(pt.y < mouthLowerBound){ return (pt.x >= mouthSpanL && pt.x <= mouthSpanR) ? '입가' : '뺨'; }
-    return '턱';
-  }
-
-  // ---------- content banks (good = 특징/장점, bad = 참고할 점, gentle & growth-framed) ----------
-  const FACE_TYPES = [
-    { max:0.70, tag:'목형(木形)', good:'세로로 갸름한 목형(木形) 얼굴이에요. 곧고 단단한 나무처럼 자기 원칙이 뚜렷하고, 한 우물을 깊게 파는 뚝심 있는 인상으로 봐요.', bad:'고집이 강해지면 주변과의 소통이 부족해 보일 수 있어요. 가끔은 다른 의견에도 귀 기울여보세요.' },
-    { max:0.78, tag:'화형(火形)', good:'위가 넓고 아래로 갈수록 좁아지는 화형(火形)이에요. 순간적으로 타오르는 에너지와 아이디어가 많고, 사람들 앞에서 빛을 발하는 인상으로 봐요.', bad:'열정이 앞서 성급한 판단을 내릴 때가 있어요. 결정 전에 한 박자 쉬어가면 좋아요.' },
-    { max:0.86, tag:'금형(金形)', good:'단정하고 균형 잡힌 금형(金形) 얼굴이에요. 금속처럼 견고하고 원칙적인 인상으로, 신뢰를 잘 쌓고 맡은 일을 끝까지 마무리하는 타입으로 봐요.', bad:'원칙을 지키려다 융통성이 부족해 보일 수 있어요. 상황에 따라 유연함을 더해보세요.' },
-    { max:0.92, tag:'토형(土形)', good:'네모지고 넓은 토형(土形)이에요. 땅처럼 든든하고 포용력 있는 인상으로, 주변을 잘 챙기고 위기에도 흔들리지 않는 안정감 있는 타입으로 봐요.', bad:'다 받아주다 보면 정작 본인 챙기는 걸 잊기 쉬워요. 가끔은 스스로를 우선순위에 두세요.' },
-    { max:99, tag:'수형(水形)', good:'둥글고 넉넉한 수형(水形) 얼굴이에요. 물처럼 유연하고 사교적이며, 어디서든 분위기를 부드럽게 만드는 재주가 있는 타입으로 봐요.', bad:'맞춰주는 게 익숙해서 정작 내 의견을 미루기 쉬워요. 원하는 걸 먼저 말하는 연습도 필요해요.' }
-  ];
-  const SAMCHONG = {
-    top:  { good:'이마(상정)가 두드러진 편이에요. 어릴 때부터 배움과 이해가 빠르고, 인생 초반의 흐름이 순탄하게 풀리는 상으로 여겨져요.', bad:'생각이 많아 실행이 늦어질 수 있어요. 계획을 짧게 쪼개 바로 실행해보는 게 도움이 돼요.' },
-    mid:  { good:'눈썹부터 코끝까지, 중정이 발달한 인상이에요. 인생의 전성기·자기 관리 능력과 연결되며, 중년의 뚝심과 실행력이 강점으로 꼽히는 타입이에요.', bad:'일에 몰두하다 보면 주변을 못 챙길 때가 있어요. 가까운 사람들과의 시간도 챙겨보세요.' },
-    bot:  { good:'코끝 아래, 하정이 여유로운 편이에요. 전통적으로 말년의 안정과 인복을 나타낸다고 보는 자리예요.', bad:'초반 추진력이 약하게 느껴질 수 있어요. 작은 목표부터 하나씩 완성해보면 자신감이 붙어요.' },
-    even: { good:'상정·중정·하정이 고르게 균형 잡혀 있어요. 인생의 어느 한 시기에 치우치지 않고, 굴곡 없이 고르게 안정적인 삶을 살아간다고 풀이해요.', bad:'무난한 만큼 강한 임팩트가 부족해 보일 수 있어요. 한 가지 분야에서 확실한 강점을 만들어보세요.' }
-  };
-  const SYM = [
-    { min:88, tag:'조화형', good:'좌우가 매우 조화로운 인상이에요. 대칭이 잘 맞을수록 마음이 안정적이고 주변과의 관계가 원만하다고 봐요.', bad:'무난함이 때로는 특별함 부족으로 비칠 수 있어요. 자신만의 포인트를 하나쯤 만들어보세요.' },
-    { min:74, tag:'균형형', good:'전체적으로 균형 잡힌 인상이에요. 안정감과 개성이 적당히 섞여 있어, 무난하면서도 은근히 기억에 남는 얼굴이라는 평을 듣는 타입이에요.', bad:'무난한 인상이라 강렬한 첫인상은 약할 수 있어요. 표정이나 스타일에 포인트를 줘보세요.' },
-    { min:60, tag:'개성형', good:'살짝 비대칭이 느껴지는, 개성 있는 인상이에요. 한쪽으로 치우친 매력이 오히려 사람을 끌어당기는 힘이 된다고 봐요.', bad:'개성이 강해 호불호가 갈릴 수 있어요. 첫 만남에서는 조금 더 부드러운 인상을 더해보세요.' },
-    { min:0,  tag:'포인트형', good:'뚜렷한 비대칭 포인트가 있는 인상이에요. 좌우가 다른 얼굴은 표정에 따라 인상이 확 달라지는 매력이 있다고 봐요.', bad:'강한 인상 탓에 오해를 살 때도 있어요. 편안한 표정을 자주 연습해보면 좋아요.' }
-  ];
-  const EYE = {
-    narrow:{ label:'좁은 편', good:'눈 사이가 가까운 편이에요. 집중력이 좋고 한 가지 일에 몰입하는 힘이 강하며, 섬세하게 관찰하는 재주가 있는 타입이에요.', bad:'몰입하다 보면 주변 신호를 놓칠 수 있어요. 가끔은 고개를 들어 주변을 살펴보세요.' },
-    mid:{ label:'보통', good:'눈 사이 간격이 균형 잡힌 편이에요. 상황 판단이 유연하고, 사람들과의 관계에서도 무난하게 잘 어울리는 인상으로 봐요.', bad:'무난한 만큼 강한 존재감은 약할 수 있어요. 대화에서 조금 더 적극적으로 나서보세요.' },
-    wide:{ label:'넓은 편', good:'눈 사이가 시원하게 넓은 편이에요. 마음이 넓고 대범하며, 큰 그림을 보는 힘이 있는 인상으로 봐요.', bad:'대범한 만큼 디테일을 놓칠 때가 있어요. 마무리 단계에서 한 번 더 확인하는 습관을 들여보세요.' }
-  };
-  const BROW = {
-    narrow:{ label:'좁은 미간', good:'미간이 좁은 편이에요. 몰입도가 높고 완벽주의적인 성향이 있으며, 디테일을 놓치지 않는 타입으로 봐요.', bad:'완벽을 추구하다 스스로를 몰아붙일 수 있어요. 가끔은 "이 정도면 충분하다"고 생각해보세요.' },
-    mid:{ label:'보통', good:'미간이 균형 잡힌 편이에요. 여유와 집중력을 함께 갖춘, 안정적인 인상으로 봐요.', bad:'무난한 만큼 튀는 매력은 약할 수 있어요. 자신만의 색깔을 하나 더해보세요.' },
-    wide:{ label:'넓은 미간', good:'미간이 시원하게 넓은 편이에요. 마음이 너그럽고 통이 크며, 작은 일에 잘 얽매이지 않는 성향으로 봐요.', bad:'너그러운 만큼 결단이 늦어질 때가 있어요. 중요한 순간엔 기준을 정해두는 게 도움이 돼요.' }
-  };
-  const NOSE = {
-    narrow:{ label:'아담한 편', good:'콧볼이 아담하고 콧대가 도드라지는 편이에요. 코는 재백궁(財帛宮), 재물의 자리로 보는데, 알뜰하고 계획적인 재물 관리형으로 봐요.', bad:'알뜰한 만큼 투자에는 소극적일 수 있어요. 가끔은 과감한 선택도 필요해요.' },
-    mid:{ label:'보통', good:'콧볼과 콧대가 균형 잡힌 편이에요. 재물의 자리인 코가 안정적이면, 벌고 쓰는 흐름이 무리 없이 순환되는 타입으로 봐요.', bad:'안정적인 만큼 큰 도약의 기회를 놓칠 수 있어요. 가끔은 리스크를 감수해보는 것도 좋아요.' },
-    wide:{ label:'넉넉한 편', good:'콧볼이 넉넉하고 든든한 편이에요. 재물이 크게 들어오고 나가는, 스케일이 큰 재물운으로 해석해요.', bad:'통이 큰 만큼 관리가 느슨해질 수 있어요. 정기적으로 지출을 점검해보세요.' }
-  };
-  const MOUTH = {
-    small:{ label:'아담한 편', good:'입이 아담한 편이에요. 말을 아끼고 신중하게 고르는 타입으로, 한 번 내뱉은 말에 무게가 실리는 인상으로 봐요.', bad:'신중한 만큼 표현이 부족해 보일 수 있어요. 마음을 조금 더 자주 표현해보세요.' },
-    mid:{ label:'보통', good:'입 크기가 균형 잡힌 편이에요. 대화의 균형 감각이 좋고, 상황에 맞게 말을 조율하는 재주가 있는 타입으로 봐요.', bad:'무난한 만큼 강한 인상은 약할 수 있어요. 확신이 있을 때는 조금 더 힘주어 말해보세요.' },
-    large:{ label:'큰 편', good:'입이 시원하게 큰 편이에요. 입은 출납관(出納官), 말과 복이 드나드는 자리로 보는데, 표현력이 좋고 사람을 끌어모으는 힘이 있다고 봐요.', bad:'표현이 풍부한 만큼 말이 많다는 인상을 줄 수 있어요. 상대의 말을 듣는 시간도 늘려보세요.' }
-  };
-  const EAR = {
-    high:{ label:'높은 편(추정)', good:'귀의 위치(추정)가 눈썹보다 높은 편이에요. 어린 시절부터 총명함이 드러나고, 결단이 빠른 인상으로 봐요.', bad:'총명한 만큼 성급하게 결론 낼 때가 있어요. 중요한 결정은 하루 정도 묵혀보세요.' },
-    mid:{ label:'보통(추정)', good:'귀의 위치(추정)가 눈썹과 코 사이, 균형 잡힌 자리에 있어요. 성실하고 꾸준한 노력형으로 해석되는 자리예요.', bad:'꾸준한 만큼 변화 대응이 더딜 수 있어요. 가끔은 새로운 방식도 시도해보세요.' },
-    low:{ label:'낮은 편(추정)', good:'귀의 위치(추정)가 코끝에 가까운 편이에요. 대기만성형, 나이가 들수록 빛을 발하는 인상으로 풀이해요.', bad:'대기만성형이라 초반 평가에 조급해질 수 있어요. 장기적인 시각으로 스스로를 믿어주세요.' }
-  };
-  const SKIN = {
-    bright:{ label:'화사한 편', good:'혈색이 화사하고 생기 있는 편이에요. 기색이 좋으면 하는 일마다 순조롭게 풀린다고 봐요. 지금 컨디션이 얼굴에도 좋게 드러나고 있어요.', bad:'컨디션이 좋을 때 무리하기 쉬워요. 좋은 흐름일수록 페이스 조절이 중요해요.' },
-    clear:{ label:'맑은 편', good:'혈색이 맑고 안정적인 편이에요. 무리 없이 꾸준한 흐름을 유지하는 시기라는 신호로 해석돼요.', bad:'안정적인 만큼 큰 변화를 시도하기 어려울 수 있어요. 가끔은 새로운 자극을 줘보세요.' },
-    calm:{ label:'차분한 편', good:'혈색이 차분하고 은은한 편이에요. 내실을 다지는 시기로 봐요. 무리하지 않고 페이스를 지키면 좋은 흐름이 이어질 거예요.', bad:'차분한 만큼 에너지가 낮아 보일 수 있어요. 컨디션 관리를 위해 휴식을 충분히 챙기세요.' }
-  };
-  const MOLE_TEXT = {
-    '이마':['이마의 점은 예로부터 지혜와 명예를 뜻하는 자리로 봐요. 생각이 깊고 리더십이 자연스럽게 드러나는 타입일 수 있어요.','이마 점은 총명함과 결단력을 상징한다고 전해집니다. 중요한 순간에 판단이 빠른 편일 거예요.'],
-    '눈가':['눈가의 점은 감정 표현이 풍부하고 사람과의 정을 소중히 여기는 상으로 봐요.','눈가 점은 매력 포인트로 통해요. 눈빛에 이야기가 담긴 사람이라는 인상을 주기 쉬워요.'],
-    '코':['코 위의 점은 전통적으로 재물운과 연결되는 자리예요. 돈 관리 감각이 좋다는 신호로 봅니다.','콧대의 점은 재물이 드나드는 자리를 상징해, 씀씀이보다 버는 감각이 발달했다는 해석이 있어요.'],
-    '입가':['입 주변의 점은 말과 인복이 따르는 자리로 봐요. 대화로 사람을 끌어당기는 힘이 있을 수 있어요.','입가 점은 미식과 풍류를 즐기는 성향, 그리고 좋은 사람들과의 인연을 뜻한다고 전해집니다.'],
-    '턱':['턱의 점은 말년의 안정과 끈기를 상징하는 자리예요. 오래갈수록 빛나는 타입일 수 있습니다.','턱 점은 주변 사람을 챙기는 포용력과 연결된다고 봐요.'],
-    '뺨':['뺨의 점은 사교성과 대인 매력을 나타내는 자리로 봐요. 사람 사이에서 분위기를 편안하게 만드는 힘이 있어요.','뺨 점은 활동적인 에너지와 붙임성을 상징한다고 전해집니다.']
-  };
-  const QUOTES = [
-    '오늘은 웃는 얼굴 하나로 좋은 인연이 다가오는 날입니다.',
-    '작은 결정 하나가 이번 달 운의 흐름을 바꿔 놓을 거예요.',
-    '미뤄둔 연락을 먼저 건네면 뜻밖의 반가운 소식이 따라옵니다.',
-    '남의 속도에 흔들리지 않을수록 당신의 페이스가 빛나는 시기입니다.',
-    '오늘 마주치는 낯선 사람과의 짧은 대화가 생각보다 오래 기억에 남을 수 있어요.',
-    '지금 품고 있는 계획, 조금 더 과감하게 밀어붙여도 좋은 흐름입니다.',
-    '얼굴에 드러난 여유가 곧 실제 여유를 불러온다는 말이 있어요. 오늘 한 번 더 웃어보세요.'
-  ];
-  const FORTUNE_TEXT = {
-    love:{ rise:'연애운이 뚜렷하게 상승하는 시기예요. 자연스러운 만남에서 좋은 인연으로 이어질 가능성이 높으니, 마음이 가는 자리에 한 번 더 나가보세요.', stable:'연애운이 안정적으로 흐르고 있어요. 곁에 있는 사람과의 관계를 조금 더 깊게 가꾸면 좋은 결실이 따를 시기입니다.', prepare:'연애운이 서서히 준비되고 있는 시기예요. 지금은 자신을 가꾸고 여유를 만드는 데 집중하면, 곧 좋은 타이밍이 찾아올 거예요.', quiet:'연애운이 차분히 쌓이고 있는 시기입니다. 서두르지 않아도 괜찮아요. 내실을 다지는 지금이 다음 만남을 더 특별하게 만들어줄 거예요.' },
-    money:{ rise:'금전운이 좋은 흐름을 타고 있어요. 계획했던 지출이나 투자를 실행하기에 나쁘지 않은 시기입니다.', stable:'금전운이 안정적이에요. 큰 변동보다는 꾸준한 관리로 재물이 차곡차곡 쌓이는 타입입니다.', prepare:'금전운이 준비 단계에 있어요. 지금은 씀씀이를 점검하고 계획을 다듬으면, 곧 기회가 따라오는 흐름이에요.', quiet:'금전운이 은근하게 다져지는 시기예요. 무리한 확장보다는 내실을 채우는 선택이 장기적으로 더 큰 이득이 될 거예요.' },
-    career:{ rise:'직업운이 뚜렷하게 상승하는 시기예요. 맡은 일에서 존재감을 드러내기 좋은 타이밍이니 자신 있게 나서보세요.', stable:'직업운이 안정적으로 흐르고 있어요. 꾸준함이 인정받는 시기라, 지금 페이스를 유지하는 것만으로도 충분합니다.', prepare:'직업운이 준비되는 단계예요. 배움과 정비에 시간을 쓰면 다음 기회에서 확실히 빛을 발할 거예요.', quiet:'직업운이 차분히 다져지는 시기입니다. 조용히 쌓은 실력이 예상보다 빨리 인정받는 순간이 올 거예요.' },
-    rel:{ rise:'인간관계운이 활짝 열리는 시기예요. 먼저 건네는 인사나 연락이 뜻밖의 좋은 인연으로 이어질 수 있어요.', stable:'인간관계운이 안정적이에요. 오래된 인연들과의 신뢰가 더 단단해지는 시기입니다.', prepare:'인간관계운이 서서히 넓어지는 시기예요. 새로운 자리에 나가보면 생각보다 잘 맞는 사람을 만날 수 있어요.', quiet:'인간관계운이 조용히 깊어지는 시기입니다. 넓히기보다 소중한 사람에게 집중하면 만족도가 높아질 거예요.' }
-  };
-
-  // ---------- helpers ----------
-  function dist(a,b){ return Math.hypot(a.x-b.x, a.y-b.y); }
-  function clamp(v,a,b){ return Math.max(a, Math.min(b,v)); }
-  function scoreFromRatio(ratio, low, high){ let t=(ratio-low)/(high-low); return clamp(t,0,1)*100; }
-  function seededVal(offset){
-    const data = ctx.getImageData(0,0,cw,ch).data;
-    let sum = 0;
-    for(let i=offset; i<data.length; i += 991){ sum += data[i]; }
-    return sum;
-  }
-  function bandFor(score){ if(score>=78) return 'rise'; if(score>=63) return 'stable'; if(score>=48) return 'prepare'; return 'quiet'; }
-
-  function computeLocalSymmetry(){
-    const faceCenterX = (points.face_l.x + points.face_r.x)/2;
-    const top = Math.max(0, Math.min(points.forehead_top.y, points.eyebrow_l.y, points.eyebrow_r.y) - 6);
-    const bottom = Math.min(ch, points.chin.y + 6);
-    const halfW = Math.min(faceCenterX, cw - faceCenterX);
-    const left = Math.max(0, faceCenterX - halfW);
-    const h = Math.floor(bottom - top);
-    const w = Math.floor(halfW);
-    if(w < 5 || h < 5) return 70;
-    const data = ctx.getImageData(0, Math.floor(top), cw, h).data;
-    const rowW = cw;
-    let diffSum = 0, count = 0;
-    const step = 3;
-    for(let y=0; y<h; y+=step){
-      for(let x=0; x<w; x+=step){
-        const lx = Math.floor(left + x);
-        const rx = Math.floor(faceCenterX + (faceCenterX - lx));
-        if(rx < 0 || rx >= cw) continue;
-        const i1 = (y*rowW + lx) * 4;
-        const i2 = (y*rowW + rx) * 4;
-        if(i2+2 >= data.length || i1+2 >= data.length) continue;
-        diffSum += (Math.abs(data[i1]-data[i2]) + Math.abs(data[i1+1]-data[i2+1]) + Math.abs(data[i1+2]-data[i2+2])) / 3;
-        count++;
-      }
-    }
-    const avgDiff = diffSum / Math.max(count,1);
-    let score = 100 - (avgDiff/255)*100*1.6;
-    return Math.round(clamp(score,30,97));
-  }
-  function sampleColorAt(pt, radius){
-    const x0 = Math.max(0, Math.floor(pt.x-radius));
-    const y0 = Math.max(0, Math.floor(pt.y-radius));
-    const w = Math.min(cw-x0, radius*2);
-    const h = Math.min(ch-y0, radius*2);
-    if(w<=0||h<=0) return {r:150,g:130,b:120};
-    const data = ctx.getImageData(x0,y0,w,h).data;
-    let r=0,g=0,b=0,n=0;
-    for(let i=0;i<data.length;i+=4){ r+=data[i]; g+=data[i+1]; b+=data[i+2]; n++; }
-    return { r:r/n, g:g/n, b:b/n };
-  }
-
-  function detailSection(icon, label, tag, shapeDesc, good, bad, borderColor){
-    return '<div class="detail-section" style="border-left-color:'+borderColor+';">'
-      + '<div class="detail-header"><h4>'+icon+' '+label+'</h4><span class="detail-tag">'+tag+'</span></div>'
-      + '<div class="shape-desc">📐 측정 결과: '+shapeDesc+'</div>'
-      + '<div class="analysis-grid">'
-      +   '<div class="good-box"><strong>🟢 특징</strong>'+good+'</div>'
-      +   '<div class="bad-box"><strong>🔴 참고</strong>'+bad+'</div>'
-      + '</div></div>';
-  }
-
-  // ---------- analyze ----------
-  function runAnalysis(){
-    const faceW = dist(points.face_l, points.face_r);
-    const faceH = dist(points.forehead_top, points.chin);
-    const ratio = faceW / faceH;
-    const faceType = FACE_TYPES.find(f => ratio <= f.max) || FACE_TYPES[FACE_TYPES.length-1];
-
-    const browAvgY = (points.eyebrow_l.y + points.eyebrow_r.y)/2;
-    const topSpan = browAvgY - points.forehead_top.y;
-    const midSpan = points.nose_tip.y - browAvgY;
-    const botSpan = points.chin.y - points.nose_tip.y;
-    const totalSpan = Math.max(1, topSpan+midSpan+botSpan);
-    const pctTop = Math.round(topSpan/totalSpan*100);
-    const pctMid = Math.round(midSpan/totalSpan*100);
-    const pctBot = 100 - pctTop - pctMid;
-
-    document.getElementById('rTop').textContent = pctTop+'%';
-    document.getElementById('rMid').textContent = pctMid+'%';
-    document.getElementById('rBot').textContent = pctBot+'%';
-
-    let samchongKey = 'even';
-    const vals = [['top',pctTop],['mid',pctMid],['bot',pctBot]].sort((a,b)=>b[1]-a[1]);
-    if(vals[0][1]-vals[1][1] > 4) samchongKey = vals[0][0];
-    const samchong = SAMCHONG[samchongKey];
-
-    const symScore = computeLocalSymmetry();
-    const symBand = SYM.find(s => symScore >= s.min);
-
-    const eyeGapRatio = dist(points.eye_l, points.eye_r) / faceW;
-    const eyeKey = eyeGapRatio < 0.30 ? 'narrow' : (eyeGapRatio > 0.37 ? 'wide' : 'mid');
-    const eye = EYE[eyeKey];
-
-    const browGapRatio = dist(points.eyebrow_l, points.eyebrow_r) / faceW;
-    const browKey = browGapRatio < 0.11 ? 'narrow' : (browGapRatio > 0.18 ? 'wide' : 'mid');
-    const brow = BROW[browKey];
-
-    const noseWidthRatio = dist(points.nose_l, points.nose_r) / faceW;
-    const noseKey = noseWidthRatio < 0.19 ? 'narrow' : (noseWidthRatio > 0.27 ? 'wide' : 'mid');
-    const nose = NOSE[noseKey];
-
-    const mouthWidthRatio = dist(points.mouth_l, points.mouth_r) / faceW;
-    const mouthKey = mouthWidthRatio < 0.31 ? 'small' : (mouthWidthRatio > 0.40 ? 'large' : 'mid');
-    const mouth = MOUTH[mouthKey];
-
-    const earAvgY = (points.jaw_l.y + points.jaw_r.y)/2;
-    let earKey = 'mid';
-    if(earAvgY < browAvgY) earKey = 'high'; else if(earAvgY > points.nose_tip.y) earKey = 'low';
-    const ear = EAR[earKey];
-
-    const skinColor = sampleColorAt(points.forehead_center, 10);
-    const brightness = (skinColor.r+skinColor.g+skinColor.b)/3/255*100;
-    const skinKey = brightness > 62 ? 'bright' : (brightness > 45 ? 'clear' : 'calm');
-    const skin = SKIN[skinKey];
-
-    // profile bar
-    document.getElementById('pFaceType').textContent = faceType.tag;
-    document.getElementById('pSym').textContent = symBand.tag;
-
-    // detail sections
-    let html = '';
-    html += detailSection('🌱','얼굴형', faceType.tag, '가로세로 비율 기준 '+faceType.tag, faceType.good, faceType.bad, 'var(--indigo)');
-    html += detailSection('📏','삼정(三停) 밸런스', samchongKey==='even'?'균형형':(samchongKey==='top'?'상정발달형':samchongKey==='mid'?'중정발달형':'하정발달형'), `상정 ${pctTop}% · 중정 ${pctMid}% · 하정 ${pctBot}%`, samchong.good, samchong.bad, 'var(--blue)');
-    html += detailSection('⚖️','인상의 대칭', symBand.tag+' · '+symScore+'점', '좌우 대칭 점수 '+symScore+'점', symBand.good, symBand.bad, 'var(--purple)');
-    html += detailSection('👁️','눈', eye.label, '눈 사이 간격 - '+eye.label, eye.good, eye.bad, 'var(--blue)');
-    html += detailSection('✒️','눈썹 · 미간', brow.label, '미간 너비 - '+brow.label, brow.good, brow.bad, 'var(--amber)');
-    html += detailSection('👃','코', nose.label, '콧볼 너비 - '+nose.label, nose.good, nose.bad, 'var(--amber)');
-    html += detailSection('👄','입', mouth.label, '입 너비 - '+mouth.label, mouth.good, mouth.bad, 'var(--pink)');
-    html += detailSection('👂','귀 (추정)', ear.label, '턱선 시작점 기준 위치 - '+ear.label, ear.good, ear.bad, 'var(--pink)');
-    html += detailSection('✨','혈색', skin.label, '이마 밝기 측정 - '+skin.label, skin.good, skin.bad, 'var(--green-strong)');
-
-    if(moles.length > 0){
-      const items = moles.map((m,i) => {
-        const arr = MOLE_TEXT[m.zone] || MOLE_TEXT['뺨'];
-        return '<div class="good-box" style="margin-bottom:6px;"><strong>🟡 '+m.zone+'점</strong>'+arr[i % arr.length]+'</div>';
-      }).join('');
-      html += '<div class="detail-section" style="border-left-color:var(--gold);"><div class="detail-header"><h4>🔸 점(點)이 말해주는 것</h4></div>'+items+'</div>';
-    }
-
-    document.getElementById('detailsContainer').innerHTML = html;
-
-    // fortune scores
-    const s1 = seededVal(0)%13-6, s2 = seededVal(7)%13-6, s3 = seededVal(13)%13-6, s4 = seededVal(19)%13-6;
-    const moleZones = moles.map(m=>m.zone);
-    const moleMoneyBonus = (moleZones.includes('코') ? 6:0) + (moleZones.includes('이마') ? 4:0);
-    const moleLoveBonus = (moleZones.includes('눈가') ? 5:0) + (moleZones.includes('입가') ? 4:0);
-    const moleRelBonus = (moleZones.includes('뺨') ? 5:0) + (moleZones.includes('입가') ? 3:0);
-    const earFactor = earKey==='mid' ? 75 : earKey==='high' ? 70 : 68;
-
-    let loveScore = Math.round(clamp(scoreFromRatio(mouthWidthRatio,0.28,0.46)*0.4 + symScore*0.4 + scoreFromRatio(eyeGapRatio,0.27,0.40)*0.2 + s1 + moleLoveBonus, 40, 95));
-    let moneyScore = Math.round(clamp(scoreFromRatio(noseWidthRatio,0.17,0.29)*0.55 + scoreFromRatio(pctBot,26,40)*0.35 + s2 + moleMoneyBonus, 40, 95));
-    let careerScore = Math.round(clamp(scoreFromRatio(pctTop,26,40)*0.45 + scoreFromRatio(pctMid,30,42)*0.3 + scoreFromRatio(brightness,40,70)*0.25 + s3, 40, 95));
-    let relScore = Math.round(clamp(scoreFromRatio(browGapRatio,0.10,0.20)*0.3 + symScore*0.45 + earFactor*0.25 + s4 + moleRelBonus, 40, 95));
-
-    setFortune('love', loveScore); setFortune('money', moneyScore); setFortune('career', careerScore); setFortune('rel', relScore);
-    function setFortune(key, score){
-      document.getElementById(key+'Score').textContent = score+'점';
-      requestAnimationFrame(()=>{ document.getElementById(key+'Gauge').style.width = score+'%'; });
-      document.getElementById(key+'Text').textContent = FORTUNE_TEXT[key][bandFor(score)];
-    }
-    const avgScore = Math.round((loveScore+moneyScore+careerScore+relScore)/4);
-    document.getElementById('pAvg').textContent = avgScore+'점';
-
-    const qIdx = Math.abs(seededVal(3)) % QUOTES.length;
-    document.getElementById('quoteText').textContent = QUOTES[qIdx];
-
-    resultEl.style.display = 'block';
-    resultEl.scrollIntoView({ behavior:'smooth', block:'start' });
-  }
-
-  // ---------- save / share result as image ----------
-  async function captureResultImage(){
-    return await html2canvas(captureContainer, { backgroundColor:'#FFFFFF', scale:2, useCORS:true });
-  }
-  saveBtn.addEventListener('click', async () => {
-    saveBtn.disabled = true;
-    const original = saveBtn.textContent;
-    saveBtn.textContent = '저장 중...';
-    try{
-      const renderCanvas = await captureResultImage();
-      const url = renderCanvas.toDataURL('image/png');
-      const a = document.createElement('a');
-      a.href = url; a.download = 'AI정밀관상_결과.png';
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    }catch(err){
-      alert('이미지 저장에 실패했어요. 다시 시도해주세요.');
-    }finally{
-      saveBtn.disabled = false; saveBtn.textContent = original;
-    }
-  });
-  shareBtn.addEventListener('click', async () => {
-    shareBtn.disabled = true;
-    const original = shareBtn.textContent;
-    shareBtn.textContent = '준비 중...';
-    try{
-      const renderCanvas = await captureResultImage();
-      renderCanvas.toBlob(async (blob) => {
-        if(!blob){ shareBtn.disabled=false; shareBtn.textContent=original; return; }
-        const file = new File([blob], 'ai-face-reading.png', { type:'image/png' });
-        if(navigator.canShare && navigator.canShare({ files:[file] })){
-          try{ await navigator.share({ files:[file], title:'AI 정밀 관상', text:'내 AI 정밀 관상 리포트예요' }); }
-          catch(shareErr){ /* user cancelled */ }
-        } else {
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url; a.download = 'ai-face-reading.png';
-          document.body.appendChild(a); a.click(); document.body.removeChild(a);
-          setTimeout(()=>URL.revokeObjectURL(url), 3000);
-        }
-        shareBtn.disabled = false; shareBtn.textContent = original;
-      }, 'image/png');
-    }catch(err){
-      shareBtn.disabled = false; shareBtn.textContent = original;
-      alert('공유 준비에 실패했어요. 다시 시도해주세요.');
-    }
-  });
-
-})();
-</script>
+    <script src="menu-data.js"></script>
+    <script>
+        const grid = document.getElementById('menuGrid');
+        fortuneMenus.forEach(menu => {
+            const card = document.createElement('a');
+            card.href = menu.url;
+            card.className = 'menu-card';
+            card.innerHTML = `
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                        <span style="font-size: 1.6rem;">${menu.icon || '✨'}</span>
+                        <span class="badge badge-${menu.theme}">${menu.badge}</span>
+                    </div>
+                    <h3>${menu.title}</h3>
+                    <p>${menu.desc}</p>
+                </div>
+                <div class="card-footer">
+                    <span>시작하기</span>
+                    <span>&rarr;</span>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+    </script>
 </body>
 </html>
