@@ -385,7 +385,6 @@
     }
 
     async function captureCombinedArea() {
-      // 캡처 시 저장/공유 버튼 영역은 잠시 숨김 처리하여 캡처 이미지에 포함되지 않도록 함
       actionBtnRow.style.display = 'none';
       const element = document.getElementById('capture-area');
       
@@ -441,7 +440,6 @@
       }
     }
 
-    // 1. 카메라 시작 및 전환 함수
     async function switchCamera() {
       useFrontCamera = !useFrontCamera;
       await startCamera();
@@ -492,7 +490,6 @@
       }
     }
 
-    // 2. MediaPipe Hands 초기화
     function initMediaPipe() {
       hands = new Hands({
         locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
@@ -516,15 +513,11 @@
       sendVideoFrame();
     }
 
-    // 손가락 관절 뼈대 및 4대 손금을 함께 그리는 함수
     function drawFullHandAndLines(landmarks, width, height) {
       ctx.save();
-
-      // 1. 손가락 전체 뼈대(점과 연결선) 그리기
       drawConnectors(ctx, landmarks, HAND_CONNECTIONS, { color: 'rgba(16, 185, 129, 0.6)', lineWidth: 2 });
       drawLandmarks(ctx, landmarks, { color: 'rgba(245, 158, 11, 0.8)', lineWidth: 1, radius: 3 });
 
-      // 2. 4대 핵심 손금 그리기
       ctx.lineWidth = 3.5;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
@@ -534,28 +527,24 @@
       const basePinky = landmarks[17];
       const thumbCmc = landmarks[1];
 
-      // 생명선
       ctx.strokeStyle = '#f59e0b';
       ctx.beginPath();
       ctx.moveTo(thumbCmc.x * width, thumbCmc.y * height);
       ctx.quadraticCurveTo((thumbCmc.x * 0.9 + wrist.x * 0.1) * width, (thumbCmc.y * 0.6 + wrist.y * 0.4) * height, (wrist.x * 0.8 + baseIndex.x * 0.2) * width, (wrist.y * 0.8 + baseIndex.y * 0.2) * height);
       ctx.stroke();
 
-      // 두뇌선
       ctx.strokeStyle = '#3b82f6';
       ctx.beginPath();
       ctx.moveTo((baseIndex.x * 0.7 + thumbCmc.x * 0.3) * width, (baseIndex.y * 0.7 + thumbCmc.y * 0.3) * height);
       ctx.quadraticCurveTo((baseIndex.x * 0.5 + basePinky.x * 0.5) * width, (baseIndex.y * 0.5 + basePinky.y * 0.5) * height, (basePinky.x * 0.4 + wrist.x * 0.6) * width, (basePinky.y * 0.4 + wrist.y * 0.6) * height);
       ctx.stroke();
 
-      // 감정선
       ctx.strokeStyle = '#ec4899';
       ctx.beginPath();
       ctx.moveTo(baseIndex.x * width, baseIndex.y * height);
       ctx.quadraticCurveTo((baseIndex.x * 0.5 + basePinky.x * 0.5) * width, (baseIndex.y * 0.9 + basePinky.y * 0.1) * height, basePinky.x * width, basePinky.y * height);
       ctx.stroke();
 
-      // 운명선
       ctx.strokeStyle = '#10b981';
       ctx.beginPath();
       ctx.moveTo(wrist.x * width, wrist.y * height);
@@ -573,8 +562,6 @@
 
       if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
         currentLandmarks = results.multiHandLandmarks[0];
-
-        // 손가락 뼈대 + 4대 손금 그리기
         drawFullHandAndLines(currentLandmarks, canvas.width, canvas.height);
 
         statusMsg.textContent = "✨ 손이 감지되었습니다! 스캔 버튼을 누르세요.";
@@ -589,13 +576,11 @@
       ctx.restore();
     }
 
-    // 3. 스캔 및 분석
     function startPalmScan() {
       if (!cameraActive || !btnAction.classList.contains("active")) return;
       isScanning = true;
       btnAction.classList.remove("active");
       
-      // 1) 즉시 현재 비디오 프레임을 캡처해서 고정 이미지로 변환
       canvas.width = video.videoWidth || 480;
       canvas.height = video.videoHeight || 640;
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -603,20 +588,17 @@
       snapshotImg.style.display = "block";
       video.style.display = "none";
 
-      // 2) 캔버스에 뼈대와 손금을 먼저 그린 상태로 고정
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       if (currentLandmarks) {
         drawFullHandAndLines(currentLandmarks, canvas.width, canvas.height);
       }
 
-      // 3) 스캔 애니메이션 시작 및 가이드 프레임 숨김
       scanOverlay.classList.add("active");
       guideFrame.style.display = "none";
       
       statusMsg.textContent = "🔍 AI가 손금을 정밀 스캔하고 분석 중입니다...";
       statusMsg.className = "status-msg info";
 
-      // 4) 스캔 연출(2.5초) 동안 캔버스(뼈대/손금)가 이미지 위에서 계속 유지됨
       setTimeout(() => {
         scanOverlay.classList.remove("active");
         showResults();
