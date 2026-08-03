@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 토탈 운세 센터</title>
+    <title>AI 토탈 운세 센터 - brushu</title>
     <link rel="stylesheet" href="style.css">
     <style>
         .hero {
@@ -12,6 +12,27 @@
         }
         .hero h1 { font-size: 1.8rem; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.5px; }
         .hero p { color: var(--text-sub); font-size: 0.95rem; }
+
+        /* 'brushu' 문자열을 직접 그래픽 로고 형태로 디자인한 스타일 */
+        .brand-logo-badge {
+            display: inline-flex;
+            align-items: center;
+            background: linear-gradient(135deg, #4f46e5, #9333ea);
+            color: #ffffff;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: 800;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            margin-right: 8px;
+            vertical-align: middle;
+            box-shadow: 0 2px 6px rgba(79, 70, 229, 0.35);
+            text-transform: lowercase;
+        }
+        .brand-logo-badge span {
+            color: #38bdf8;
+        }
 
         .menu-grid {
             display: grid;
@@ -81,7 +102,7 @@
 <body>
 
     <nav class="app-nav">
-        <a href="index.html" class="nav-brand">🔮 AI 운세 센터</a>
+        <a href="index.html" class="nav-brand"><span class="brand-logo-badge">brush<span>u</span></span>🔮 AI 운세 센터</a>
     </nav>
 
     <div class="app-container">
@@ -94,7 +115,7 @@
     </div>
 
     <script>
-        // 내부 데이터 직접 정의 (관상 분석 아이콘을 정상적인 이모지 '👤'로 수정)
+        // 내부 데이터 직접 정의 (관상 분석 아이콘을 정상적인 이모지 '👤'로 수정)[cite: 5]
         const fortuneMenus = [
             {
                 title: "AI 손금(수상) 분석",
