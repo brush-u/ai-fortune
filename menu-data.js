@@ -19,12 +19,12 @@ const fortuneMenus = [
         icon: "✋"
     },
     {
-        id: "siju",
+        id: "saju", // id 및 url을 saju.html에 맞춰 수정
         title: "정통 사주명리",
         desc: "생년월일시로 알아보는 선천적 기운과 오행",
-        url: "siju.html",
+        url: "saju.html",
         theme: "amber",
-        badge: "준비중",
+        badge: "정통 명리", // "준비중" 제거
         icon: "📜"
     },
     {
@@ -33,7 +33,7 @@ const fortuneMenus = [
         desc: "올해의 총운부터 매달 흐르는 세부 운세",
         url: "tojeong.html",
         theme: "purple",
-        badge: "준비중",
+        badge: "신년 운세", // "준비중" 제거
         icon: "📖"
     }
 ];
