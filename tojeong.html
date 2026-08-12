@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BRUSHU - 직관적 토정비결</title>
+    <style>
+        :root {
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-main: #212529;
+            --text-sub: #555555;
+            --primary: #1b4332;
+            --primary-light: #e8f5e9;
+            --accent: #d90429;
+            --border: #e9ecef;
+            --radius: 16px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-color); color: var(--text-main); display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        
+        /* 상단 네비게이션 스타일 추가 */
+        .app-nav {
+            width: 100%;
+            max-width: 480px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            font-size: 0.85rem;
+        }
+        .nav-brand { font-weight: bold; color: #1b4332; text-decoration: none; }
+        .nav-home-btn { color: #64748b; text-decoration: none; cursor: pointer; }
+
+        .app-container { width: 100%; max-width: 480px; padding: 0 16px 16px 16px; display: flex; flex-direction: column; gap: 14px; }
+        .header { text-align: center; padding: 6px 0; }
+        .header h1 { font-size: 1.4rem; font-weight: 700; color: var(--primary); }
+
+        .card { background: var(--card-bg); border-radius: var(--radius); padding: 18px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); border: 1px solid var(--border); }
+        .form-group { margin-bottom: 14px; }
+        .form-label { font-size: 0.95rem; font-weight: 700; color: var(--text-sub); margin-bottom: 6px; display: block; }
+        
+        .seg-group { display: flex; gap: 8px; }
+        .seg-btn { flex: 1; height: 44px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: 10px; font-size: 0.95rem; cursor: pointer; background: #fff; color: var(--text-sub); transition: all 0.15s ease; }
+        .seg-btn.active { border-color: var(--primary); background-color: var(--primary-light); color: var(--primary); font-weight: 700; }
+
+        .input-date, .select-year { width: 100%; height: 46px; border: 1px solid var(--border); border-radius: 10px; padding: 0 12px; font-size: 1rem; outline: none; background: #fff; color: var(--text-main); }
+
+        /* 3D 12지신 시계 다이얼 */
+        .clock-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 12px 0 8px; }
+        .clock-dial { position: relative; width: 270px; height: 270px; border-radius: 50%; background: linear-gradient(145deg, #ffffff, #e2ece9); box-shadow: 8px 8px 16px #d0ddd9, -8px -8px 16px #ffffff; border: 3px solid #ffffff; }
+        .clock-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 104px; height: 104px; border-radius: 50%; background: linear-gradient(145deg, #ffffff, #edf5f2); box-shadow: inset 3px 3px 6px #d0ddd9, inset -3px -3px 6px #ffffff, 0 4px 10px rgba(0,0,0,0.05); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2; text-align: center; }
+        .clock-center .selected-icon { font-size: 1.6rem; }
+        .clock-center .selected-name { font-size: 0.95rem; font-weight: 700; color: var(--primary); margin-top: 2px; }
+        .clock-center .selected-time { font-size: 0.75rem; color: var(--text-sub); }
+
+        .zodiac-node { position: absolute; width: 46px; height: 46px; border-radius: 50%; background: linear-gradient(145deg, #ffffff, #e3f0ec); box-shadow: 4px 4px 8px #c2d6cf, -3px -3px 6px #ffffff; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1); z-index: 3; transform: translate(-50%, -50%); user-select: none; -webkit-tap-highlight-color: transparent; }
+        .zodiac-node .icon { font-size: 1.1rem; line-height: 1; }
+        .zodiac-node .name { font-size: 0.7rem; font-weight: 700; color: var(--text-main); margin-top: 2px; }
+        .zodiac-node:active { transform: translate(-50%, -50%) scale(0.92); }
+        .zodiac-node.active { background: linear-gradient(145deg, #1b4332, #2d6a4f); box-shadow: inset 3px 3px 6px rgba(0,0,0,0.3), inset -2px -2px 4px rgba(255,255,255,0.3), 0 0 10px rgba(27, 67, 50, 0.4); transform: translate(-50%, -50%) scale(1.08); }
+        .zodiac-node.active .name { color: #ffffff; }
+
+        .btn-submit { width: 100%; height: 52px; background-color: var(--primary); color: #fff; border: none; border-radius: 12px; font-size: 1.05rem; font-weight: 700; cursor: pointer; margin-top: 8px; }
+
+        /* 결과 영역 */
+        .result-area { display: none; }
+        .section-title { font-size: 1.2rem; font-weight: 700; color: var(--primary); margin-bottom: 4px; }
+        .section-sub { font-size: 0.9rem; color: var(--text-sub); margin-bottom: 14px; }
+
+        .personal-meta-box { background: #f1f5f9; border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; border: 1px solid #cbd5e1; font-size: 0.88rem; line-height: 1.5; color: #334155; }
+        .personal-meta-box strong { color: var(--primary); }
+
+        .trigram-box { background: var(--primary-light); border: 1px solid #c8e6c9; border-radius: 12px; padding: 14px; text-align: center; margin-bottom: 16px; }
+        .trigram-title { font-size: 0.88rem; font-weight: 700; color: var(--primary); }
+        .trigram-code { font-size: 1.4rem; font-weight: 800; color: var(--primary); margin: 4px 0; letter-spacing: 2px; }
+        .trigram-desc { font-size: 0.92rem; color: var(--text-main); font-weight: 600; }
+
+        .year-summary-card { padding: 16px; background: #ffffff; border-radius: 14px; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.02); margin-bottom: 16px; }
+        .card-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .summary-badge { font-size: 1.05rem; font-weight: 700; color: var(--primary); }
+        .score-stars { font-size: 0.95rem; color: #f59e0b; font-weight: 700; }
+
+        .key-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+        .tag-pill { font-size: 0.8rem; font-weight: 700; padding: 3px 8px; background: var(--primary-light); color: var(--primary); border-radius: 6px; border: 1px solid #c8e6c9; }
+
+        .summary-desc { font-size: 0.95rem; color: var(--text-main); line-height: 1.6; margin-bottom: 10px; }
+        .action-box { background: #f8fafc; border-left: 4px solid var(--primary); padding: 10px 12px; border-radius: 6px; font-size: 0.88rem; color: #334155; line-height: 1.45; }
+
+        /* 12개월 월별 신수 리스트 */
+        .month-grid { display: flex; flex-direction: column; gap: 12px; margin-top: 8px; }
+        .month-item { padding: 14px; background: #ffffff; border-radius: 12px; border: 1px solid #edf2f7; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.03); }
+        .month-top { display: flex; gap: 10px; align-items: center; }
+        .month-badge { min-width: 46px; height: 38px; display: flex; align-items: center; justify-content: center; background: var(--primary-light); border: 1px solid #c8e6c9; border-radius: 8px; font-weight: 700; font-size: 0.92rem; color: var(--primary); }
+        .month-header-info { flex: 1; display: flex; justify-content: space-between; align-items: center; }
+        .month-title { font-size: 0.98rem; font-weight: 700; color: var(--text-main); }
+        .month-status { font-size: 0.85rem; font-weight: 700; }
+
+        .month-desc { font-size: 0.9rem; color: #334155; line-height: 1.5; font-weight: 500; }
+        
+        .custom-detail-box { background: #f8fafc; border-radius: 8px; padding: 10px 12px; font-size: 0.86rem; color: #1e293b; line-height: 1.5; border-left: 3px solid #3b82f6; }
+        .custom-detail-box strong { font-weight: 700; }
+    </style>
+</head>
+<body>
+
+<nav class="app-nav">
+    <a href="index.html" class="nav-brand">📜 토정비결</a>
+    <a href="index.html" class="nav-home-btn">🏠 AI 운세 센터 홈</a>
+</nav>
+
+<div class="app-container">
+    <div class="header">
+        <h1>개인 맞춤 토정비결</h1>
+    </div>
+
+    <!-- 입력 카드 -->
+    <div class="card">
+        <form id="tojeongForm">
+            <div class="form-group">
+                <label class="form-label">운세를 볼 연도</label>
+                <select id="targetYear" class="select-year">
+                    <option value="2026" selected>2026년 (병오년)</option>
+                    <option value="2027">2027년 (정미년)</option>
+                    <option value="2028">2028년 (무신년)</option>
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 10px;" class="form-group">
+                <div style="flex: 1;">
+                    <label class="form-label">성별</label>
+                    <div class="seg-group" id="genderGroup">
+                        <div class="seg-btn active" data-val="M">남성</div>
+                        <div class="seg-btn" data-val="F">여성</div>
+                    </div>
+                </div>
+                <div style="flex: 1;">
+                    <label class="form-label">달력</label>
+                    <div class="seg-group" id="calGroup">
+                        <div class="seg-btn active" data-val="solar">양력</div>
+                        <div class="seg-btn" data-val="lunar">음력</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">생년월일</label>
+                <input type="date" id="birthDate" class="input-date" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">태어난 시간 (12지신 시계)</label>
+                <div class="clock-wrapper">
+                    <div class="clock-dial" id="clockDial">
+                        <div class="clock-center" id="clockCenter">
+                            <span class="selected-icon">🐭</span>
+                            <span class="selected-name">자시</span>
+                            <span class="selected-time">23:30~01:29</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-submit">토정비결 확인하기</button>
+        </form>
+    </div>
+
+    <!-- 동적 결과 영역 -->
+    <div class="card result-area" id="resultCard">
+        <div class="section-title" id="resTitle">📜 토정비결 상세 운세</div>
+        <div class="section-sub">12개월 월별 주요 흐름 및 실천 가이드</div>
+
+        <div class="personal-meta-box" id="personalMeta">--</div>
+
+        <div class="trigram-box">
+            <div class="trigram-title">올해 산출된 토정 괘(卦)</div>
+            <div class="trigram-code" id="trigramCode">第 -- 卦</div>
+            <div class="trigram-desc" id="trigramDesc">--</div>
+        </div>
+
+        <div class="year-summary-card">
+            <div class="card-header-row">
+                <span class="summary-badge">🌾 한 해 총운 분석</span>
+                <span class="score-stars" id="yearStars">★★★★☆</span>
+            </div>
+            <div class="key-tags" id="yearTags"></div>
+            <p class="summary-desc" id="yearDesc">--</p>
+            <div class="action-box" id="yearAction">--</div>
+        </div>
+
+        <label style="font-size:0.95rem; font-weight:700; color:var(--primary); display:block; margin-top:8px;">📅 12개월 월별 맞춤 신수 및 실천 지침</label>
+        <div class="month-grid" id="monthContainer"></div>
+    </div>
+</div>
+
+<script>
+    const GAN = ["갑(甲)", "을(乙)", "병(丙)", "정(丁)", "무(戊)", "기(己)", "경(庚)", "신(辛)", "임(壬)", "계(癸)"];
+    
+    const ZODIAC_DATA = [
+        { name: "자시", icon: "🐭", time: "23:30~01:29" },
+        { name: "축시", icon: "🐮", time: "01:30~03:29" },
+        { name: "인시", icon: "🐯", time: "03:30~05:29" },
+        { name: "묘시", icon: "🐰", time: "05:30~07:29" },
+        { name: "진시", icon: "🐲", time: "07:30~09:29" },
+        { name: "사시", icon: "🐍", time: "09:30~11:29" },
+        { name: "오시", icon: "🐴", time: "11:30~13:29" },
+        { name: "미시", icon: "🐑", time: "13:30~15:29" },
+        { name: "신시", icon: "🐵", time: "15:30~17:29" },
+        { name: "유시", icon: "🐔", time: "17:30~19:29" },
+        { name: "술시", icon: "🐶", time: "19:30~21:29" },
+        { name: "해시", icon: "🐷", time: "21:30~23:29" }
+    ];
+
+    let selectedZodiac = "자시";
+    let selectedGender = "M";
+    let selectedCal = "solar";
+
+    function init3DClockDial() {
+        const dial = document.getElementById('clockDial');
+        const radius = 104;
+        const centerX = 135;
+        const centerY = 135;
+
+        ZODIAC_DATA.forEach((z, index) => {
+            const angle = (index * 30 - 90) * (Math.PI / 180);
+            const x = centerX + radius * Math.cos(angle);
+            const y = centerY + radius * Math.sin(angle);
+
+            const node = document.createElement('div');
+            node.className = 'zodiac-node';
+            if (index === 0) node.classList.add('active');
+            node.style.left = `${x}px`;
+            node.style.top = `${y}px`;
+            node.innerHTML = `<span class="icon">${z.icon}</span><span class="name">${z.name}</span>`;
+            
+            node.addEventListener('click', () => {
+                document.querySelectorAll('.zodiac-node').forEach(n => n.classList.remove('active'));
+                node.classList.add('active');
+                selectedZodiac = z.name;
+
+                document.getElementById('clockCenter').innerHTML = `
+                    <span class="selected-icon">${z.icon}</span>
+                    <span class="selected-name">${z.name}</span>
+                    <span class="selected-time">${z.time}</span>
+                `;
+            });
+
+            dial.appendChild(node);
+        });
+    }
+
+    init3DClockDial();
+
+    document.querySelectorAll('.seg-group').forEach(group => {
+        group.addEventListener('click', (e) => {
+            const target = e.target.closest('.seg-btn');
+            if (target) {
+                group.querySelectorAll('.seg-btn').forEach(btn => btn.classList.remove('active'));
+                target.classList.add('active');
+                if (group.id === 'genderGroup') selectedGender = target.dataset.val;
+                if (group.id === 'calGroup') selectedCal = target.dataset.val;
+            }
+        });
+    });
+
+    // 12개월 완벽 고유 문장 연산 로직
+    function calculateIntuitiveTojeong(targetYear, birthDateStr, zodiacTime, gender, cal) {
+        const timeIndex = ZODIAC_DATA.findIndex(z => z.name === zodiacTime) + 1;
+        
+        const date = new Date(birthDateStr);
+        const dayDiff = Math.floor(date.getTime() / (1000 * 60 * 60 * 24));
+        const dayGanIdx = Math.abs(dayDiff % 10);
+        const myGan = GAN[dayGanIdx];
+
+        const seedStr = `${targetYear}-${birthDateStr}-${timeIndex}-${gender}-${cal}`;
+        let hash = 0;
+        for (let i = 0; i < seedStr.length; i++) {
+            hash = (hash << 5) - hash + seedStr.charCodeAt(i);
+            hash |= 0;
+        }
+        const seed = Math.abs(hash);
+
+        const trigramNum = (seed % 64) + 1;
+        
+        const trigramPool = [
+            { desc: "모심은 들판에 단비가 내려 곡식이 무성한 형국", stars: "★★★★★", tags: ["#대길운", "#결실 창출", "#귀인 조력"], summary: "어려웠던 환경이 호전되어 노력 이상의 결과를 맺는 귀한 대길의 한 해입니다.", action: "💡 <b>처세 가이드:</b> 기회가 올 때 망설이지 말고 적극적으로 판을 넓히는 전략이 유효합니다." },
+            { desc: "풍운이 변화하여 새로운 터전을 구축하는 형국", stars: "★★★★☆", tags: ["#변화 도약", "#신사업", "#환경 개선"], summary: "기존의 한계를 깨고 새로운 분야로 범위를 넓히며 가치를 입증하는 해입니다.", action: "💡 <b>처세 가이드:</b> 과거의 방식에 안주하지 말고 과감히 새 시스템을 도입하세요." },
+            { desc: "산 위에서 바다를 바라보며 내실을 다지는 형국", stars: "★★★☆☆", tags: ["#내실 정비", "#리스크 관리", "#안정 도모"], summary: "성급한 확장보다는 내부의 시스템과 내실을 탄탄하게 조율할 때 자산이 지켜집니다.", action: "💡 <b>처세 가이드:</b> 계약과 자금 지출 시 서류 검토를 철저히 하여 실수를 방지하세요." },
+            { desc: "솔개 날아오르고 물고기가 힘차게 뛰어노는 형국", stars: "★★★★☆", tags: ["#역량 입증", "#명예 상승", "#전문성"], summary: "오랫동안 쌓아온 노하우와 전문성이 대외적으로 크게 인정받는 상승 흐름입니다.", action: "💡 <b>처세 가이드:</b> 본인의 전문성을 명확히 브랜딩하여 대외적 입지를 넓히세요." }
+        ];
+
+        const selectedTrigram = trigramPool[seed % trigramPool.length];
+
+        // 12개월 전용 직관적 상황 및 실천 가이드 뱅크 (각 월마다 다채롭게 구성)
+        const monthDetailsBank = [
+            { desc: "새로운 계획이나 기획을 구상하기에 완벽한 시기입니다. 추진력이 상승합니다.", guide: "망설이던 아이디어가 있다면 구체적인 실행 계획을 작성해 보세요." },
+            { desc: "대외 소통과 인적 교류가 활발해지는 달입니다. 주변 사람과의 협력이 중요합니다.", guide: "대외 미팅이나 협상 시 세련된 표현으로 신뢰감을 심어주세요." },
+            { desc: "실속을 정비하고 내부 시스템을 단속해야 하는 정리의 달입니다.", guide: "중요 서류나 계약 건은 조항을 세밀히 검증한 후 진행하세요." },
+            { desc: "체력과 정신적 피로를 보충해야 하는 쉬어가는 시기입니다.", guide: "무리한 스케줄을 줄이고 충분한 수면과 휴식을 우선시하세요." },
+            { desc: "그동안 축적한 역량이 결실로 드러나며 성과를 평가받는 시기입니다.", guide: "본인의 공로와 성과를 명확하게 어필하여 입지를 공고히 하세요." },
+            { desc: "자금 흐름이나 유동성을 점검하고 불필요한 지출을 차단할 시기입니다.", guide: "투자나 지출계획을 재검토하여 안전 자산 위주로 다지세요." },
+            { desc: "주변 귀인이나 능력자의 조력으로 난관이 수월하게 풀어지는 달입니다.", guide: "혼자 해결하려 하지 말고 전문성을 갖춘 인재와 적극 상의하세요." },
+            { desc: "새로운 기술이나 지식을 습득하고 역량을 강화하기에 유리합니다.", guide: "자기개발이나 교육, 자격 관련 공부에 집중해 보세요." },
+            { desc: "환경이나 소속, 직무 변화의 기운이 나타나는 도약의 달입니다.", guide: "익숙함에 안주하지 말고 과감하게 새 시스템을 수용하세요." },
+            { desc: "감정적인 오해나 주변 마찰을 유의하고 언행을 신중히 할 시기입니다.", guide: "상대방의 의견을 경청하고 충동적인 주장을 자제하세요." },
+            { desc: "자산이나 투자 성과가 구체화되는 안정적인 순항 흐름입니다.", guide: "이익이 생겼을 때 재투자보다는 내실 지키기에 힘쓰세요." },
+            { desc: "한 해의 성과를 총정리하고 다음 단계를 준비하는 마무리의 달입니다.", guide: "부족했던 부분을 보완하고 장기적인 로드맵을 그려보세요." }
+        ];
+
+        const months = [];
+        const statusTypes = [
+            { status: "🍀 상승운", color: "#1b4332", titleBase: "기회 활용 및 추진" },
+            { status: "⚠️ 리스크 관리", color: "#d90429", titleBase: "내실 정비 및 방어" },
+            { status: "➖ 평탄 순항", color: "#4b5563", titleBase: "안정 다지기 및 결실" }
+        ];
+
+        for (let m = 1; m <= 12; m++) {
+            // 각 달(m)과 사용자 시드(seed)를 복합 연산하여 매달 서로 다른 문장 인덱스 지정
+            const uniqueMonthIdx = (seed + m * 7 + dayGanIdx * 3) % monthDetailsBank.length;
+            const flow = monthDetailsBank[uniqueMonthIdx];
+
+            const stIdx = (seed + m * 13) % 3;
+            const st = statusTypes[stIdx];
+
+            months.push({
+                month: `${m}월`,
+                title: `${m}월: ${st.titleBase} 시기`,
+                status: st.status,
+                color: st.color,
+                desc: flow.desc,
+                customDetail: `💡 <b>[${myGan}일간 맞춤 가이드]:</b> ${flow.guide}`
+            });
+        }
+
+        return {
+            myGan,
+            trigramNum,
+            trigram: selectedTrigram,
+            months
+        };
+    }
+
+    // 폼 제출 연동
+    document.getElementById('tojeongForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const birthDate = document.getElementById('birthDate').value;
+        const targetYear = document.getElementById('targetYear').value;
+
+        if(!birthDate) {
+            alert('생년월일을 입력해주세요.');
+            return;
+        }
+
+        const res = calculateIntuitiveTojeong(targetYear, birthDate, selectedZodiac, selectedGender, selectedCal);
+
+        // UI 반영
+        document.getElementById('resTitle').innerText = `📜 ${targetYear}년 개인 맞춤 토정비결`;
+        document.getElementById('personalMeta').innerHTML = `
+            👤 <b>사주 기준 진단:</b> 타고난 일간 기질 <b>[${res.myGan}]</b> 분석 적용<br>
+            ※ 12개월 전체가 고유한 맞춤형 상황 및 가이드로 동적 산출됩니다.
+        `;
+        
+        document.getElementById('trigramCode').innerText = `第 ${res.trigramNum} 卦`;
+        document.getElementById('trigramDesc').innerText = `"${res.trigram.desc}"`;
+        document.getElementById('yearStars').innerText = res.trigram.stars;
+        document.getElementById('yearDesc').innerText = res.trigram.summary;
+        document.getElementById('yearAction').innerHTML = res.trigram.action;
+
+        const tagsContainer = document.getElementById('yearTags');
+        tagsContainer.innerHTML = res.trigram.tags.map(t => `<span class="tag-pill">${t}</span>`).join('');
+
+        const monthContainer = document.getElementById('monthContainer');
+        monthContainer.innerHTML = '';
+        res.months.forEach(item => {
+            monthContainer.insertAdjacentHTML('beforeend', `
+                <div class="month-item">
+                    <div class="month-top">
+                        <div class="month-badge">${item.month}</div>
+                        <div class="month-header-info">
+                            <span class="month-title">${item.title}</span>
+                            <span class="month-status" style="color: ${item.color}">${item.status}</span>
+                        </div>
+                    </div>
+                    <div class="month-desc">${item.desc}</div>
+                    <div class="custom-detail-box">${item.customDetail}</div>
+                </div>
+            `);
+        });
+
+        const resultCard = document.getElementById('resultCard');
+        resultCard.style.display = 'block';
+        resultCard.scrollIntoView({ behavior: 'smooth' });
+    });
+</script>
+
+</body>
+</html>
