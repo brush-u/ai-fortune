@@ -115,7 +115,6 @@
     </div>
 
     <script>
-        // 내부 데이터 직접 정의 (관상 분석 아이콘을 정상적인 이모지 '👤'로 수정)[cite: 5]
         const fortuneMenus = [
             {
                 title: "AI 손금(수상) 분석",
@@ -160,32 +159,25 @@
         ];
 
         const grid = document.getElementById('menuGrid');
-        
-        // 정통사주명리 및 신토정비결 서비스 준비중 처리 키워드[cite: 2]
-        const preparingKeywords = ["정통사주명리", "신토정", "사주명리"];
 
         fortuneMenus.forEach(menu => {
-            const isPreparing = preparingKeywords.some(keyword => menu.title.includes(keyword));
-            const card = document.createElement(isPreparing ? 'div' : 'a');
-            
-            if (!isPreparing) {
-                card.href = menu.url;
-            }
-            
-            card.className = `menu-card ${isPreparing ? 'disabled' : ''}`;
+            // 모든 메뉴를 링크 <a> 태그로 생성하여 활성화 처리
+            const card = document.createElement('a');
+            card.href = menu.url;
+            card.className = 'menu-card';
             
             card.innerHTML = `
                 <div>
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
                         <span style="font-size: 1.8rem;">${menu.icon || '✨'}</span>
-                        <span class="badge ${isPreparing ? 'badge-gray' : 'badge-' + menu.theme}">${isPreparing ? '준비중' : menu.badge}</span>
+                        <span class="badge badge-${menu.theme}">${menu.badge}</span>
                     </div>
                     <h3>${menu.title}</h3>
                     <p>${menu.desc}</p>
                 </div>
                 <div class="card-footer">
-                    <span>${isPreparing ? '서비스 준비중' : '시작하기'}</span>
-                    <span>${isPreparing ? '⏳' : '&rarr;'}</span>
+                    <span>시작하기</span>
+                    <span>&rarr;</span>
                 </div>
             `;
             grid.appendChild(card);
